@@ -1,12 +1,14 @@
 package ru.datana.cassandra.repository;
 
-import com.datastax.driver.core.LocalDate;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
+
 import lombok.AllArgsConstructor;
 import ru.datana.cassandra.model.MultiSensorDataModel;
 import ru.datana.cassandra.model.SingleSensorDataModel;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
@@ -21,13 +23,13 @@ public class DatalakeRepository {
     private static final String MULTI_SENSOR_TABLE_NAME = "controllers_tasks_data_responses_multi";
     private static final DateTimeFormatter isoDate = DateTimeFormatter.ISO_DATE;
 
-    protected Session session;
+    protected Connection connection;
     protected String schemaName;
 
     /**
      * Создание структуры на 1 датчик на строку
      */
-    public void createSingleSensorStructure(boolean forceDrop) {
+    public void createSingleSensorStructure(boolean forceDrop) throws SQLException {
         StringBuilder dropTable = new StringBuilder("DROP TABLE IF EXISTS ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME);
 
@@ -39,9 +41,10 @@ public class DatalakeRepository {
                 .append("errors VARCHAR(4000),")
                 .append("PRIMARY KEY (partition_date, partition_hour, partition_minute)")
                 .append(");");
-
-        if (forceDrop) session.execute(dropTable.toString());
-        session.execute(tableBuilder.toString());
+        try (Statement st =connection.createStatement()){
+            if (forceDrop) st.execute(dropTable.toString());
+            st.execute(tableBuilder.toString());
+        }
     }
 
     /**
@@ -50,7 +53,7 @@ public class DatalakeRepository {
      * @param numberOfSensors количество датчиков в строке
      * @param forceDrop       нужно ли удалять структуру перед созданием, обязательно, если количество столбцов меняется
      */
-    public void createMultiSensorStructure(int numberOfSensors, boolean forceDrop) {
+    public void createMultiSensorStructure(int numberOfSensors, boolean forceDrop) throws SQLException {
         StringBuilder dropType = new StringBuilder("DROP TABLE IF EXISTS ")
                 .append(schemaName).append(".").append(SENSOR_DATA_TYPE_NAME);
 
@@ -69,10 +72,15 @@ public class DatalakeRepository {
                 .append(schemaName).append(".").append(MULTI_SENSOR_TABLE_NAME);
 
         if (forceDrop) {
-            session.execute(dropTable.toString());
-            session.execute(dropType.toString());
+            try (Statement st =connection.createStatement()) {
+                st.execute(dropTable.toString());
+                st.execute(dropType.toString());
+            }
         }
-        session.execute(typeBuilder.toString());
+
+        try (Statement st =connection.createStatement()) {
+            st.execute(typeBuilder.toString());
+        }
     }
 
     /**
@@ -81,8 +89,10 @@ public class DatalakeRepository {
      * @param sensorData данные датчика
      */
     @Deprecated
-    public void insertSingleSensorData(SingleSensorDataModel sensorData) {
-        session.execute(prepareSingleSensorDataInsert(sensorData));
+    public void insertSingleSensorData(SingleSensorDataModel sensorData) throws SQLException {
+        try (Statement st = connection.createStatement()) {
+            st.execute(prepareSingleSensorDataInsert(sensorData));
+        }
     }
 
     /**
@@ -91,11 +101,13 @@ public class DatalakeRepository {
      * @param sensorDataList - данные датчиков списком
      */
     @Deprecated
-    public void insertSingleSensorDataPackage(List<SingleSensorDataModel> sensorDataList) {
-        StringBuilder sb = new StringBuilder("BEGIN BATCH ");
+    public void insertSingleSensorDataPackage(List<SingleSensorDataModel> sensorDataList) throws SQLException {
+        StringBuilder sb = new StringBuilder("BEGIN");
         sensorDataList.forEach(sensorData -> sb.append(prepareSingleSensorDataInsert(sensorData)));
         sb.append("APPLY BATCH;");
-        session.execute(sb.toString());
+        try (Statement st = connection.createStatement()) {
+            st.execute(sb.toString());
+        }
     }
 
     /**
@@ -103,7 +115,7 @@ public class DatalakeRepository {
      *
      * @param sensorData данные выборки датчиков
      */
-    public void insertMultiSensorData(MultiSensorDataModel sensorData) {
+    public void insertMultiSensorData(MultiSensorDataModel sensorData) throws SQLException {
 
         StringBuilder sb = new StringBuilder("INSERT INTO ")
                 .append(schemaName).append(".").append(MULTI_SENSOR_TABLE_NAME).append("(")
@@ -138,10 +150,12 @@ public class DatalakeRepository {
                 .append("'")
         );
         sb.append(");");
-        session.execute(sb.toString());
+        try (Statement st = connection.createStatement()) {
+            st.execute(sb.toString());
+        }
     }
 
-    public PreparedStatement createPreparedStatementForSingleSensorDataPackage(int packageSize) {
+    public PreparedStatement createPreparedStatementForSingleSensorDataPackage(int packageSize) throws SQLException {
         StringBuilder sb = new StringBuilder("BEGIN BATCH ");
         IntStream.range(0, packageSize).forEach(i -> sb.append("INSERT INTO ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME).append("(")
@@ -163,7 +177,7 @@ public class DatalakeRepository {
                 .append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
         );
         sb.append("APPLY BATCH;");
-        return session.prepare(sb.toString());
+        return connection.prepareStatement(sb.toString());
     }
 
     public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<SingleSensorDataModel> sensorDataList) {

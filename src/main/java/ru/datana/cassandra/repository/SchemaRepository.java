@@ -1,18 +1,23 @@
 package ru.datana.cassandra.repository;
 
-import com.datastax.driver.core.Session;
 import lombok.AllArgsConstructor;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 @AllArgsConstructor
 public class SchemaRepository {
-    private Session session;
+    private Connection session;
 
-    public void createSchema(String keyspaceName, String replicationStrategy, int replicationFactor) {
+    public void createSchema(String schemaName, String replicationStrategy, int replicationFactor) throws SQLException {
         StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ")
-                .append(keyspaceName)
+                .append(schemaName)
                 .append(";");
 
         String query = sb.toString();
-        session.execute(query);
+        try(Statement stm = session.createStatement()) {
+            stm.execute(query.toString());
+        }
     }
 }
