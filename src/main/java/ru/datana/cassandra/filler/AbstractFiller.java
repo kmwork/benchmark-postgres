@@ -1,21 +1,21 @@
 package ru.datana.cassandra.filler;
 
-import com.datastax.driver.core.Session;
 import ru.datana.cassandra.ToolsParameters;
-import ru.datana.cassandra.connector.CassandraConnector;
+import ru.datana.cassandra.connector.PostgresConnector;
 import ru.datana.cassandra.repository.DatalakeRepository;
 import ru.datana.cassandra.repository.SchemaRepository;
 
+import java.sql.Connection;
 import java.util.List;
 
 public abstract class AbstractFiller {
-    protected CassandraConnector client;
+    protected PostgresConnector client;
     protected SchemaRepository schemaRepository;
     protected DatalakeRepository datalakeRepository;
-    protected Session session;
+    protected Connection connection;
 
     protected void connect(List<String> nodes, Integer port, String keyspaceName) {
-        client = new CassandraConnector();
+        client = new PostgresConnector();
         client.connect(nodes, port);
         session = client.getSession();
         schemaRepository = new SchemaRepository(session);
