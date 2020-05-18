@@ -2,6 +2,8 @@ package ru.datana.cassandra.repository;
 
 
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import ru.datana.cassandra.model.MultiSensorDataModel;
 import ru.datana.cassandra.model.SingleSensorDataModel;
 
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SuppressWarnings("StringBufferReplaceableByString")
+@Slf4j
 @AllArgsConstructor
 public class DatalakeRepository {
     private static final String SENSOR_DATA_TYPE_NAME = "sensor_data";
@@ -180,28 +183,35 @@ public class DatalakeRepository {
         return connection.prepareStatement(sb.toString());
     }
 
+    @SneakyThrows
     public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<SingleSensorDataModel> sensorDataList) {
         Object[] params = new Object[sensorDataList.size() * 14];
         var ref = new Object() {
             int i = 0;
         };
         sensorDataList.forEach(sensorData -> {
-            params[ref.i++] = LocalDate.fromMillisSinceEpoch(sensorData.getTechnicalData().getResponseDatetime().getTime());
-            params[ref.i++] = (byte) sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour();
-            params[ref.i++] = (byte) sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute();
-            params[ref.i++] = sensorData.getTechnicalData().getRequestId();
-            params[ref.i++] = sensorData.getTechnicalData().getControllerId();
-            params[ref.i++] = sensorData.getTechnicalData().getTaskId();
-            params[ref.i++] = sensorData.getTechnicalData().getRequestDatetime();
-            params[ref.i++] = sensorData.getTechnicalData().getRequestDatetimeProxy();
-            params[ref.i++] = sensorData.getTechnicalData().getResponseDatetime();
-            params[ref.i++] = sensorData.getSensorData().getSensorId();
-            params[ref.i++] = sensorData.getSensorData().getData();
-            params[ref.i++] = sensorData.getSensorData().getControllerDatetime();
-            params[ref.i++] = sensorData.getSensorData().getStatus();
-            params[ref.i++] = sensorData.getSensorData().getErrors();
+            try {
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime());
+                preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour());
+                preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute());
+                preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getRequestId().toString());
+                preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getControllerId().toString());
+                preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getTaskId().toString());
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetime().getTime()));
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()));
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
+                preparedStatement.setString(ref.i++, sensorData.getSensorData().getSensorId().toString());
+                preparedStatement.setDouble(ref.i++, sensorData.getSensorData().getData());
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime());
+                preparedStatement.setInt(ref.i++, sensorData.getSensorData().getStatus());
+                preparedStatement.setString(ref.i++, sensorData.getSensorData().getErrors().toString());
+            } catch (SQLException e) {
+                String msg = "Error  in insertSingleSensorDataPackageWithPreparedStatement  of lamda i = " + ref.i
+                System.err.println(msg, e);
+                throw new RuntimeException(msg, e);
+            }
         });
-        session.execute(preparedStatement.bind(params));
+        preparedStatement.execute();
     }
 
     //------------------------- private block -------------------------
