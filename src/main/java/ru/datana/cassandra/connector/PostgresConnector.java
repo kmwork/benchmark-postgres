@@ -1,5 +1,6 @@
 package ru.datana.cassandra.connector;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -9,7 +10,8 @@ import java.util.List;
 
 @Slf4j
 public class PostgresConnector {
-    private Connection session;
+    @Getter
+    private Connection connection;
 
     public void connect(List<String> nodes, Integer port) {
         connect(nodes, port, null, null);
@@ -22,39 +24,37 @@ public class PostgresConnector {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            System.out.println("PostgreSQL JDBC Driver is not found. Include it in your library path ");
-            e.printStackTrace();
-            return;
+            String msg = "PostgreSQL JDBC Driver is not found. Include it in your library path";
+            log.error(msg, e);
+            throw new RuntimeException(msg, e);
         }
 
-        System.out.println("PostgreSQL JDBC Driver successfully connected");
+        log.debug("PostgreSQL JDBC Driver successfully connected");
         Connection connection = null;
 
         String url = "jdbc:postgresql://" + nodes + ":" + port + "/postgres";
         try {
-            connection = DriverManager
-                    .getConnection(url, login, password);
+            connection = DriverManager.getConnection(url, login, password);
 
         } catch (SQLException e) {
-            log.debug("Connection Failed");
-            e.printStackTrace();
-            return;
+            String msg = "Connection Failed";
+            log.error(msg, e);
+            throw new RuntimeException(msg, e);
+
         }
 
         if (connection != null) {
-            log.debug("You successfully connected to database now");
+            log.info("You successfully connected to database now");
         } else {
-            log.debug("Failed to make connection to database");
+            String msg = "Failed to make connection to database";
+            throw new RuntimeException(msg);
+
         }
     }
 
-    public Session getSession() {
-        return this.session;
-    }
 
-    public void close() {
-        if (session != null) session.close();
-        if (cluster != null) cluster.close();
+    public void close() throws SQLException {
+        if (connection != null) connection.close();
     }
 //}
 //
