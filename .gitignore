@@ -1,0 +1,12 @@
+**/logs
+**/*.iml
+.idea
+target
+.project
+.classpath
+.settings
+.factorypath
+.apt_generated
+.settings
+*.log
+MANIFEST.MF
