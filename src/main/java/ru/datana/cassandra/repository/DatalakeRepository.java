@@ -191,7 +191,7 @@ public class DatalakeRepository {
         };
         sensorDataList.forEach(sensorData -> {
             try {
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime());
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour());
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute());
                 preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getRequestId().toString());
@@ -202,12 +202,13 @@ public class DatalakeRepository {
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setString(ref.i++, sensorData.getSensorData().getSensorId().toString());
                 preparedStatement.setDouble(ref.i++, sensorData.getSensorData().getData());
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime());
+                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getSensorData().getStatus());
                 preparedStatement.setString(ref.i++, sensorData.getSensorData().getErrors().toString());
             } catch (SQLException e) {
-                String msg = "Error  in insertSingleSensorDataPackageWithPreparedStatement  of lamda i = " + ref.i
-                System.err.println(msg, e);
+                String msg = "Error  in insertSingleSensorDataPackageWithPreparedStatement  of lamda i = " + ref.i;
+                System.err.println(msg);
+                e.printStackTrace();
                 throw new RuntimeException(msg, e);
             }
         });
