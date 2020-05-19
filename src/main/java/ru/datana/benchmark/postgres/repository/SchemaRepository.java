@@ -1,4 +1,4 @@
-package ru.datana.cassandra.repository;
+package ru.datana.benchmark.postgres.repository;
 
 import lombok.AllArgsConstructor;
 

@@ -1,4 +1,4 @@
-package ru.datana.cassandra.helper;
+package ru.datana.benchmark.postgres.helper;
 
 public class SensorIdHolder {
     private int sensorId;

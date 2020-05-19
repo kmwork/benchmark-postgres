@@ -1,11 +1,11 @@
-package ru.datana.cassandra.repository;
+package ru.datana.benchmark.postgres.repository;
 
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import ru.datana.cassandra.model.MultiSensorDataModel;
-import ru.datana.cassandra.model.SingleSensorDataModel;
+import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
+import ru.datana.benchmark.postgres.model.SingleSensorDataModel;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

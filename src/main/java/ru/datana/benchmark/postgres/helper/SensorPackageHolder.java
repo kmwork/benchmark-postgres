@@ -1,6 +1,6 @@
-package ru.datana.cassandra.helper;
+package ru.datana.benchmark.postgres.helper;
 
-import ru.datana.cassandra.model.TechnicalData;
+import ru.datana.benchmark.postgres.model.TechnicalData;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

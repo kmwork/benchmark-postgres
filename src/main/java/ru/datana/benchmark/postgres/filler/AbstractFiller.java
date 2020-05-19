@@ -1,9 +1,9 @@
-package ru.datana.cassandra.filler;
+package ru.datana.benchmark.postgres.filler;
 
-import ru.datana.cassandra.ToolsParameters;
-import ru.datana.cassandra.connector.PostgresConnector;
-import ru.datana.cassandra.repository.DatalakeRepository;
-import ru.datana.cassandra.repository.SchemaRepository;
+import ru.datana.benchmark.postgres.ToolsParameters;
+import ru.datana.benchmark.postgres.connector.PostgresConnector;
+import ru.datana.benchmark.postgres.repository.DatalakeRepository;
+import ru.datana.benchmark.postgres.repository.SchemaRepository;
 
 import java.sql.Connection;
 import java.sql.SQLException;

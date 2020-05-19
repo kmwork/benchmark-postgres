@@ -1,9 +1,9 @@
-package ru.datana.cassandra.filler;
+package ru.datana.benchmark.postgres.filler;
 
 import lombok.extern.slf4j.Slf4j;
-import ru.datana.cassandra.ToolsParameters;
-import ru.datana.cassandra.helper.GenerateHelper;
-import ru.datana.cassandra.model.MultiSensorDataModel;
+import ru.datana.benchmark.postgres.ToolsParameters;
+import ru.datana.benchmark.postgres.helper.GenerateHelper;
+import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 
 import java.sql.SQLException;
 import java.util.stream.IntStream;

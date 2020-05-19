@@ -1,4 +1,4 @@
-package ru.datana.cassandra;
+package ru.datana.benchmark.postgres;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package ru.datana.cassandra.connector;
+package ru.datana.benchmark.postgres.connector;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
