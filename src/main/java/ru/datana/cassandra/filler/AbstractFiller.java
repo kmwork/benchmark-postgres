@@ -6,6 +6,7 @@ import ru.datana.cassandra.repository.DatalakeRepository;
 import ru.datana.cassandra.repository.SchemaRepository;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 public abstract class AbstractFiller {
@@ -14,17 +15,17 @@ public abstract class AbstractFiller {
     protected DatalakeRepository datalakeRepository;
     protected Connection connection;
 
-    protected void connect(List<String> nodes, Integer port, String keyspaceName) {
+    protected void connect(List<String> nodes, Integer port, String schemaName) {
         client = new PostgresConnector();
         client.connect(nodes, port);
-        session = client.getSession();
-        schemaRepository = new SchemaRepository(session);
-        datalakeRepository = new DatalakeRepository(session, keyspaceName);
+        connection = client.getConnection();
+        schemaRepository = new SchemaRepository(connection);
+        datalakeRepository = new DatalakeRepository(connection, schemaName);
     }
 
-    protected void closeConnection() {
+    protected void closeConnection() throws SQLException {
         if (client != null) client.close();
     }
 
-    public abstract void fillDatabase(ToolsParameters parameters);
+    public abstract void fillDatabase(ToolsParameters parameters) throws SQLException;
 }

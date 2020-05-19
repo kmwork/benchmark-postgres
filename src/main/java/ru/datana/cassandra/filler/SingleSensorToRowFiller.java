@@ -1,17 +1,20 @@
 package ru.datana.cassandra.filler;
 
-import com.datastax.driver.core.PreparedStatement;
+import lombok.extern.slf4j.Slf4j;
 import ru.datana.cassandra.ToolsParameters;
 import ru.datana.cassandra.helper.GenerateHelper;
 import ru.datana.cassandra.helper.SensorPackageHolder;
 import ru.datana.cassandra.model.SingleSensorDataModel;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Slf4j
 public class SingleSensorToRowFiller extends AbstractFiller {
     @Override
-    public void fillDatabase(ToolsParameters parameters) {
+    public void fillDatabase(ToolsParameters parameters) throws SQLException {
         try {
             connect(parameters.getNodes(), parameters.getPort(), parameters.getKeyspace());
             if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure(true);
@@ -30,7 +33,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
                     ref.insertedBeforeLog += parameters.getPackageSize();
                     if (ref.insertedBeforeLog >= 100000) {
                         ref.insertedBeforeLog %= 100000;
-                        System.out.println((ref.totallyInserted / 1000) + "к");
+                        log.info((ref.totallyInserted / 1000) + "к");
                     }
                 }
             } else {
@@ -40,12 +43,12 @@ public class SingleSensorToRowFiller extends AbstractFiller {
                     ref.insertedBeforeLog += parameters.getPackageSize();
                     if (ref.insertedBeforeLog >= 50000) {
                         ref.insertedBeforeLog %= 50000;
-                        System.out.println((ref.totallyInserted / 1000) + "к");
+                        log.info((ref.totallyInserted / 1000) + "к");
                     }
                 });
             }
             long stop = System.currentTimeMillis();
-            System.out.println("Time to generate " + ref.totallyInserted + " rows - " + (stop - start) + " ms");
+            log.info("Time to generate " + ref.totallyInserted + " rows - " + (stop - start) + " ms");
         } finally {
             closeConnection();
         }
