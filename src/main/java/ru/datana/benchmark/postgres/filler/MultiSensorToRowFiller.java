@@ -10,12 +10,16 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class MultiSensorToRowFiller extends AbstractFiller {
+    public MultiSensorToRowFiller(ToolsParameters parameters) throws SQLException {
+        super(parameters);
+    }
+
     @Override
-    public void fillDatabase(ToolsParameters parameters) throws SQLException {
+    public void fillDatabase() throws SQLException {
         try {
-            connect(parameters.getHost(), parameters.getPort(), parameters.getLogin(), parameters.getPassword(), parameters.getSchema());
+
             if (parameters.isForceRecreate()) {
-                datalakeRepository.createMultiSensorStructure(parameters.getPackageSize(), true);
+                datalakeRepository.createMultiSensorStructure(parameters.getPackageSize());
             }
             long start = System.currentTimeMillis();
             if (parameters.getNumberOfPackages() == ToolsParameters.UNLIMITED_PACKAGES) {

@@ -8,15 +8,26 @@ import java.sql.Statement;
 
 @AllArgsConstructor
 public class SchemaRepository {
-    private Connection session;
+    private Connection connection;
 
-    public void createSchema(String schemaName, String replicationStrategy, int replicationFactor) throws SQLException {
+    public void createSchema(String schemaName) throws SQLException {
         StringBuilder sb = new StringBuilder("CREATE SCHEMA IF NOT EXISTS ")
                 .append(schemaName)
                 .append(";");
 
         String query = sb.toString();
-        try(Statement stm = session.createStatement()) {
+        try(Statement stm = connection.createStatement()) {
+            stm.execute(query.toString());
+        }
+    }
+
+    public void dropSchema(String schemaName) throws SQLException {
+        StringBuilder sb = new StringBuilder("DROP SCHEMA CASCADE IF NOT EXISTS ")
+                .append(schemaName)
+                .append(";");
+
+        String query = sb.toString();
+        try(Statement stm = connection.createStatement()) {
             stm.execute(query.toString());
         }
     }

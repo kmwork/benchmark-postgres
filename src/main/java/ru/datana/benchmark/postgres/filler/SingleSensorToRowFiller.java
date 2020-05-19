@@ -13,11 +13,14 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class SingleSensorToRowFiller extends AbstractFiller {
+    public SingleSensorToRowFiller(ToolsParameters parameters) throws SQLException {
+        super(parameters);
+    }
+
     @Override
-    public void fillDatabase(ToolsParameters parameters) throws SQLException {
+    public void fillDatabase() throws SQLException {
         try {
-            connect(parameters.getHost(), parameters.getPort(), parameters.getSchema(), parameters.getLogin(), parameters.getPassword());
-            if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure(true);
+            if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure();
             SensorPackageHolder sensorPackageHolder = new SensorPackageHolder(parameters.getNumberOfSensors());
             var ref = new Object() {
                 long totallyInserted = 0;
@@ -62,4 +65,5 @@ public class SingleSensorToRowFiller extends AbstractFiller {
                         .build())
                 .collect(Collectors.toList()));
     }
+
 }

@@ -7,15 +7,17 @@ import ru.datana.benchmark.postgres.filler.SingleSensorToRowFiller;
 @Slf4j
 public class PostgreSqlTools {
     public static void main(String... args) {
-        //org.apache.log4j.BasicConfigurator.configure();
         try {
             ToolsParameters parameters = ToolsParameters.parseArgs(args);
+
             switch (parameters.getMode()) {
                 case SINGLE:
-                    new SingleSensorToRowFiller().fillDatabase(parameters);
+                    SingleSensorToRowFiller single = new SingleSensorToRowFiller(parameters);
+                    single.fillDatabase();
                     break;
                 case MULTI:
-                    new MultiSensorToRowFiller().fillDatabase(parameters);
+                    MultiSensorToRowFiller multi = new MultiSensorToRowFiller(parameters);
+                    multi.fillDatabase();
                     break;
             }
         }catch (Exception e){

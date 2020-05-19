@@ -31,9 +31,7 @@ public class DatalakeRepository {
     /**
      * Создание структуры на 1 датчик на строку
      */
-    public void createSingleSensorStructure(boolean forceDrop) throws SQLException {
-        StringBuilder dropTable = new StringBuilder("DROP TABLE IF EXISTS ")
-                .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME);
+    public void createSingleSensorStructure() throws SQLException {
 
         StringBuilder tableBuilder = createStringBuilderForTableWithTechnicalPart(SINGLE_SENSOR_TABLE_NAME)
                 .append("sensor_id UUID,")
@@ -44,7 +42,6 @@ public class DatalakeRepository {
                 .append("PRIMARY KEY (partition_date, partition_hour, partition_minute)")
                 .append(");");
         try (Statement st = connection.createStatement()) {
-            if (forceDrop) st.execute(dropTable.toString());
             st.execute(tableBuilder.toString());
         }
     }
@@ -55,10 +52,7 @@ public class DatalakeRepository {
      * @param numberOfSensors количество датчиков в строке
      * @param forceDrop       нужно ли удалять структуру перед созданием, обязательно, если количество столбцов меняется
      */
-    public void createMultiSensorStructure(int numberOfSensors, boolean forceDrop) throws SQLException {
-        StringBuilder dropType = new StringBuilder("DROP TABLE IF EXISTS ")
-                .append(schemaName).append(".").append(SENSOR_DATA_TYPE_NAME);
-
+    public void createMultiSensorStructure(int numberOfSensors) throws SQLException {
 
         StringBuilder typeBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
                 .append(schemaName).append(".").append(SENSOR_DATA_TYPE_NAME).append("(")
@@ -70,18 +64,6 @@ public class DatalakeRepository {
                 .append("sensor_map hstore")
                 .append(");");
 
-        StringBuilder dropTable = new StringBuilder("DROP TABLE IF EXISTS ")
-                .append(schemaName).append(".").append(MULTI_SENSOR_TABLE_NAME);
-
-        if (forceDrop) {
-            try (Statement st = connection.createStatement()) {
-                log.debug("[SQL: DROP] " + dropTable);
-                st.execute(dropTable.toString());
-
-                log.debug("[SQL: DROP] " + dropType);
-                st.execute(dropType.toString());
-            }
-        }
 
         try (Statement st = connection.createStatement()) {
             st.execute(typeBuilder.toString());

@@ -7,15 +7,22 @@ import ru.datana.benchmark.postgres.repository.SchemaRepository;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
 public abstract class AbstractFiller {
     protected PostgresConnector client;
     protected SchemaRepository schemaRepository;
     protected DatalakeRepository datalakeRepository;
     protected Connection connection;
+    protected ToolsParameters parameters;
 
-    protected void connect(String host, Integer port, String login,String password, String schemaName) {
+    public AbstractFiller(ToolsParameters parameters) throws SQLException {
+        this.parameters = parameters;
+        connect(parameters.getHost(), parameters.getPort(), parameters.getLogin(), parameters.getPassword(), parameters.getSchema());
+        createSchema();
+    }
+
+
+    private void connect(String host, Integer port, String login, String password, String schemaName) {
         client = new PostgresConnector();
         client.connect(host, port, login, password);
         connection = client.getConnection();
@@ -27,5 +34,11 @@ public abstract class AbstractFiller {
         if (client != null) client.close();
     }
 
-    public abstract void fillDatabase(ToolsParameters parameters) throws SQLException;
+    public void createSchema() throws SQLException {
+        if (parameters.isForceRecreate())
+            schemaRepository.dropSchema(parameters.getSchema());
+        schemaRepository.createSchema(parameters.getSchema());
+    }
+
+    public abstract void fillDatabase() throws SQLException;
 }
