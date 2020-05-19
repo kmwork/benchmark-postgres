@@ -26,7 +26,7 @@ public class PostgresConnector {
         }
 
         log.debug("PostgreSQL JDBC Driver successfully connected");
-        Connection connection = null;
+        connection = null;
         String url = "jdbc:postgresql://" + host + ":" + port + "/postgres";
         try {
             connection = DriverManager.getConnection(url, login, password);

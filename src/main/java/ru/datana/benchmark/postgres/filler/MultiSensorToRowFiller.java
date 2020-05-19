@@ -13,7 +13,7 @@ public class MultiSensorToRowFiller extends AbstractFiller {
     @Override
     public void fillDatabase(ToolsParameters parameters) throws SQLException {
         try {
-            connect(parameters.getHost(), parameters.getPort(), parameters.getSchema(), parameters.getLogin(), parameters.getPassword());
+            connect(parameters.getHost(), parameters.getPort(), parameters.getLogin(), parameters.getPassword(), parameters.getSchema());
             if (parameters.isForceRecreate()) {
                 datalakeRepository.createMultiSensorStructure(parameters.getPackageSize(), true);
             }

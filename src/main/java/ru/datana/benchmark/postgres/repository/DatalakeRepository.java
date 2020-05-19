@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@SuppressWarnings("StringBufferReplaceableByString")
 @Slf4j
 @AllArgsConstructor
 public class DatalakeRepository {
@@ -44,7 +43,7 @@ public class DatalakeRepository {
                 .append("errors VARCHAR(4000),")
                 .append("PRIMARY KEY (partition_date, partition_hour, partition_minute)")
                 .append(");");
-        try (Statement st =connection.createStatement()){
+        try (Statement st = connection.createStatement()) {
             if (forceDrop) st.execute(dropTable.toString());
             st.execute(tableBuilder.toString());
         }
@@ -75,13 +74,16 @@ public class DatalakeRepository {
                 .append(schemaName).append(".").append(MULTI_SENSOR_TABLE_NAME);
 
         if (forceDrop) {
-            try (Statement st =connection.createStatement()) {
+            try (Statement st = connection.createStatement()) {
+                log.debug("[SQL: DROP] " + dropTable);
                 st.execute(dropTable.toString());
+
+                log.debug("[SQL: DROP] " + dropType);
                 st.execute(dropType.toString());
             }
         }
 
-        try (Statement st =connection.createStatement()) {
+        try (Statement st = connection.createStatement()) {
             st.execute(typeBuilder.toString());
         }
     }
