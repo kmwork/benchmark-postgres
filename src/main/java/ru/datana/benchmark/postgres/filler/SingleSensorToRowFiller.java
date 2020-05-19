@@ -16,7 +16,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
     @Override
     public void fillDatabase(ToolsParameters parameters) throws SQLException {
         try {
-            connect(parameters.getNodes(), parameters.getPort(), parameters.getKeyspace());
+            connect(parameters.getHost(), parameters.getPort(), parameters.getSchema(), parameters.getLogin(), parameters.getPassword());
             if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure(true);
             SensorPackageHolder sensorPackageHolder = new SensorPackageHolder(parameters.getNumberOfSensors());
             var ref = new Object() {

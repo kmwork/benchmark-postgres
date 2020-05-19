@@ -15,9 +15,9 @@ public abstract class AbstractFiller {
     protected DatalakeRepository datalakeRepository;
     protected Connection connection;
 
-    protected void connect(List<String> nodes, Integer port, String schemaName) {
+    protected void connect(String host, Integer port, String login,String password, String schemaName) {
         client = new PostgresConnector();
-        client.connect(nodes, port);
+        client.connect(host, port, login, password);
         connection = client.getConnection();
         schemaRepository = new SchemaRepository(connection);
         datalakeRepository = new DatalakeRepository(connection, schemaName);

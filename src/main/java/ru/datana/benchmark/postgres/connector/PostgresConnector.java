@@ -13,11 +13,7 @@ public class PostgresConnector {
     @Getter
     private Connection connection;
 
-    public void connect(List<String> nodes, Integer port) {
-        connect(nodes, port, null, null);
-    }
-
-    public void connect(List<String> nodes, Integer port, String login, String password) {
+    public void connect(String host, Integer port, String login, String password) {
 
         log.debug("Testing connection to PostgreSQL JDBC");
 
@@ -31,13 +27,12 @@ public class PostgresConnector {
 
         log.debug("PostgreSQL JDBC Driver successfully connected");
         Connection connection = null;
-
-        String url = "jdbc:postgresql://" + nodes + ":" + port + "/postgres";
+        String url = "jdbc:postgresql://" + host + ":" + port + "/postgres";
         try {
             connection = DriverManager.getConnection(url, login, password);
 
         } catch (SQLException e) {
-            String msg = "Connection Failed";
+            String msg = "Connection Failed, url = "+url;
             log.error(msg, e);
             throw new RuntimeException(msg, e);
 

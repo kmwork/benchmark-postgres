@@ -7,7 +7,7 @@ import ru.datana.benchmark.postgres.filler.SingleSensorToRowFiller;
 @Slf4j
 public class PostgreSqlTools {
     public static void main(String... args) {
-
+        //org.apache.log4j.BasicConfigurator.configure();
         try {
             ToolsParameters parameters = ToolsParameters.parseArgs(args);
             switch (parameters.getMode()) {

@@ -14,21 +14,16 @@ public class ToolsParameters {
     public static final int UNLIMITED_PACKAGES = 0;
     public static final boolean DISABLE_RECREATING = false;
 
-    private List<String> nodes;
+    private String host;
     private Integer port;
     private String login;
     private String password;
-    private String keyspace;
+    private String schema;
     private int packageSize;
     private int numberOfPackages;
     private int numberOfSensors;
     private boolean forceRecreate;
     private ColumnMode mode;
-
-    private void addNode(String node) {
-        if (nodes == null) nodes = new ArrayList<>();
-        nodes.add(node);
-    }
 
     public enum ColumnMode {
         SINGLE, MULTI
@@ -45,7 +40,7 @@ public class ToolsParameters {
             String[] split = arg.split("=");
             switch (split[0]) {
                 case "-h":
-                    parameters.addNode(split[1]);
+                    parameters.setHost(split[1]);
                     break;
                 case "-p":
                     parameters.setPort(Integer.valueOf(split[1]));
@@ -57,7 +52,7 @@ public class ToolsParameters {
                     parameters.setPassword(split[1]);
                     break;
                 case "-k":
-                    parameters.setKeyspace(split[1]);
+                    parameters.setSchema(split[1]);
                     break;
                 case "-s":
                     parameters.setPackageSize(Integer.valueOf(split[1]));
