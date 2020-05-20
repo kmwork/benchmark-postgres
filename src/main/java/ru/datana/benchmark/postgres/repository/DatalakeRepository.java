@@ -6,9 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 import ru.datana.benchmark.postgres.model.TechnicalData;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +32,20 @@ public class DatalakeRepository {
      */
     public void createSingleSensorStructure() throws SQLException {
 
-        StringBuilder tableBuilder = createStringBuilderForTableWithTechnicalPart(SINGLE_SENSOR_TABLE_NAME)
-                .append("sensor_id bigint,")
-                .append("data hstore,")
-                .append("controller_datetime TIMESTAMP,")
-                .append("status SMALLINT,")
-                .append("errors VARCHAR(4000),")
-                .append("PRIMARY KEY (partition_date, partition_hour, partition_minute, sensor_id)")
+        StringBuilder tableBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
+                .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME)
+                .append("(")
+                .append("partition_date DATE NULL,")
+                .append("partition_hour SMALLINT NULL,")
+                .append("partition_minute SMALLINT NULL,")
+                .append("request_id bigint NULL,")
+                .append("controller_id bigint NULL,")
+                .append("task_id bigint NULL,")
+                .append("request_datetime TIMESTAMP NULL,")
+                .append("request_datetime_proxy TIMESTAMP NULL,")
+                .append("response_datetime TIMESTAMP NULL,")
+                .append("data hstore null,")
+                .append("PRIMARY KEY (partition_date, partition_hour, partition_minute, request_id)")
                 .append(");");
         try (Statement st = connection.createStatement()) {
             log.debug("[SQL:Create] sql = " + tableBuilder);
@@ -73,20 +82,27 @@ public class DatalakeRepository {
                 .append("request_datetime,")
                 .append("request_datetime_proxy,")
                 .append("response_datetime,")
-                .append("data,")
+                .append("data")
                 .append(")")
                 .append(" VALUES (?,?,?,?,?,?,?,?,?,?);")
+
         );
+        log.debug("[SQL:Prepared-Insert] sql = "+sb);
         return connection.prepareStatement(sb.toString());
     }
 
     public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<MultiSensorDataModel> sensorDataList) throws SQLException {
+        log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
         for (MultiSensorDataModel m : sensorDataList) {
-            StringBuilder sb = new StringBuilder(sensorDataList.size()*512);
+            StringBuilder sb = new StringBuilder(sensorDataList.size() * 512);
             sb.append("'");
             int index = 0;
             for (var sd : m.getSensorData()) {
+
+                if (index != 0)
+                    sb.append(",");
                 index++;
+
                 Map<String, Object> sensorMap = new HashMap<>();
                 sb.append("\"").append(index).append("_sensor_id\" => \"").append(sd.getSensorId()).append("\"");
                 sb.append(", \"").append(index).append("_data\" => \"").append(sd.getData()).append("\"");
@@ -95,19 +111,21 @@ public class DatalakeRepository {
                 sb.append(", \"").append(index).append("_errors\" => \"").append(sd.getErrors().toString()).append("\"");
             }
             sb.append("'");
-            int paramIndex = 1;
+
+            log.debug("[Insert:Data] m = " + m);
 
             TechnicalData t = m.getTechnicalData();
-            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            preparedStatement.setInt(paramIndex++, t.getResponseDatetime().toLocalDateTime().getHour());
-            preparedStatement.setInt(paramIndex++, t.getResponseDatetime().toLocalDateTime().getMinute());
-            preparedStatement.setLong(paramIndex++, t.getRequestId());
-            preparedStatement.setLong(paramIndex++, t.getControllerId());
-            preparedStatement.setLong(paramIndex++, t.getTaskId());
-            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
-            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
-            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            preparedStatement.setString(paramIndex++, sb.toString());
+
+            preparedStatement.setTimestamp(1, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+            preparedStatement.setInt(2, t.getResponseDatetime().toLocalDateTime().getHour());
+            preparedStatement.setInt(3, t.getResponseDatetime().toLocalDateTime().getMinute());
+            preparedStatement.setLong(4, t.getRequestId());
+            preparedStatement.setLong(5, t.getControllerId());
+            preparedStatement.setLong(6, t.getTaskId());
+            preparedStatement.setTimestamp(7, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
+            preparedStatement.setTimestamp(8, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
+            preparedStatement.setTimestamp(9, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+            preparedStatement.setString(10, sb.toString());
 
             preparedStatement.execute();
         }
@@ -116,18 +134,5 @@ public class DatalakeRepository {
 //------------------------- private block -------------------------
 
 
-    private StringBuilder createStringBuilderForTableWithTechnicalPart(String tableName) {
-        return new StringBuilder("CREATE TABLE IF NOT EXISTS ")
-                .append(schemaName).append(".").append(tableName)
-                .append("(")
-                .append("partition_date DATE,")
-                .append("partition_hour SMALLINT,")
-                .append("partition_minute SMALLINT,")
-                .append("request_id bigint,")
-                .append("controller_id bigint,")
-                .append("task_id bigint,")
-                .append("request_datetime TIMESTAMP,")
-                .append("request_datetime_proxy TIMESTAMP,")
-                .append("response_datetime TIMESTAMP,");
-    }
+
 }

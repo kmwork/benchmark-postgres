@@ -1,11 +1,13 @@
 package ru.datana.benchmark.postgres.repository;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+@Slf4j
 @AllArgsConstructor
 public class SchemaRepository {
     private Connection connection;
@@ -16,7 +18,7 @@ public class SchemaRepository {
                 .append(";");
 
         String query = sb.toString();
-        try(Statement stm = connection.createStatement()) {
+        try (Statement stm = connection.createStatement()) {
             stm.execute(query.toString());
         }
     }
@@ -27,8 +29,9 @@ public class SchemaRepository {
                 .append(" CASCADE;");
 
         String query = sb.toString();
-        try(Statement stm = connection.createStatement()) {
-            stm.execute(query.toString());
+        try (Statement stm = connection.createStatement()) {
+            log.debug("[SQL:Drop] sql = " + query);
+            stm.execute(query);
         }
     }
 }
