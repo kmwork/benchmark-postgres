@@ -41,7 +41,13 @@ public class SingleSensorToRowFiller extends AbstractFiller {
                 }
             } else {
                 IntStream.range(0, parameters.getNumberOfPackages()).forEach(i -> {
-                    fillPackageAndSaveIt(preparedStatement, parameters.getPackageSize(), sensorPackageHolder);
+                    try {
+                        fillPackageAndSaveIt(preparedStatement, parameters.getPackageSize(), sensorPackageHolder);
+                    } catch (SQLException e) {
+                       String msg = "Error in fillPackageAndSaveIt, i = "+i;
+                       log.error(msg, e);
+                       throw new RuntimeException(msg, e);
+                    }
                     ref.totallyInserted += parameters.getPackageSize();
                     ref.insertedBeforeLog += parameters.getPackageSize();
                     if (ref.insertedBeforeLog >= 50000) {
@@ -57,7 +63,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
         }
     }
 
-    private void fillPackageAndSaveIt(PreparedStatement preparedStatement, int packageSize, SensorPackageHolder sensorPackageHolder) {
+    private void fillPackageAndSaveIt(PreparedStatement preparedStatement, int packageSize, SensorPackageHolder sensorPackageHolder) throws SQLException {
         datalakeRepository.insertSingleSensorDataPackageWithPreparedStatement(preparedStatement, IntStream.range(0, packageSize)
                 .mapToObj(i -> SingleSensorDataModel.builder()
                         .technicalData(sensorPackageHolder.next().getTechnicalData())

@@ -2,8 +2,8 @@ package ru.datana.benchmark.postgres.repository;
 
 
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import ru.datana.benchmark.postgres.model.SensorData;
 import ru.datana.benchmark.postgres.model.SingleSensorDataModel;
 
 import java.sql.Connection;
@@ -45,7 +45,6 @@ public class DatalakeRepository {
             st.execute(tableBuilder.toString());
         }
     }
-
 
 
     /**
@@ -93,6 +92,17 @@ public class DatalakeRepository {
         };
         sensorDataList.forEach(sensorData -> {
             try {
+                SensorData sd = sensorData.getSensorData();
+                StringBuilder sb = new StringBuilder(1024);
+                sb
+                        .append("'")
+                        .append("\"sensor_id\" => \"").append(sd.getSensorId()).append("\"")
+                        .append(", \"data\" =>\"").append(sd.getData()).append("\"")
+                        .append(", \"controller_datetime\" => \"").append(sd.getControllerDatetime().getTime()).append("\"")
+                        .append(", \"status\" => \"").append(sd.getStatus()).append("\"")
+                        .append(", \"errors\" => \"").append(getErrorsAsString(sd.getErrors())).append("\"")
+                        .append("'");
+
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour());
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute());
@@ -103,7 +113,7 @@ public class DatalakeRepository {
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()));
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setLong(ref.i++, sensorData.getSensorData().getSensorId());
-                preparedStatement.setDouble(ref.i++, sensorData.getSensorData().getData());
+                preparedStatement.setString(ref.i++, sb.toString());
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getSensorData().getStatus());
                 preparedStatement.setString(ref.i++, sensorData.getSensorData().getErrors().toString());
@@ -134,9 +144,9 @@ public class DatalakeRepository {
                 .append("partition_date DATE,")
                 .append("partition_hour SMALLINT,")
                 .append("partition_minute SMALLINT,")
-                .append("request_id UUID,")
-                .append("controller_id UUID,")
-                .append("task_id UUID,")
+                .append("request_id bigint,")
+                .append("controller_id bigint,")
+                .append("task_id bigint,")
                 .append("request_datetime TIMESTAMP,")
                 .append("request_datetime_proxy TIMESTAMP,")
                 .append("response_datetime TIMESTAMP,");

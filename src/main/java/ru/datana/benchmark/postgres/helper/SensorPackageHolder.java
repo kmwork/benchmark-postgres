@@ -9,15 +9,15 @@ public class SensorPackageHolder {
 
     private int count;
     private int number;
-    private long[] uuidPool;
+    private long[] longPool;
     private LocalDateTime packageTime;
     private TechnicalData technicalData;
 
     public SensorPackageHolder(int count) {
         this.count = count;
         this.number = -1;
-        this.uuidPool = new long[count];
-        IntStream.range(0, count).forEach(i -> uuidPool[i] = GenerateHelper.getId());
+        this.longPool = new long[count];
+        IntStream.range(0, count).forEach(i -> longPool[i] = GenerateHelper.getId());
         packageTime = LocalDateTime.now();
         technicalData = GenerateHelper.generateTechnicalData(packageTime);
     }
@@ -32,7 +32,7 @@ public class SensorPackageHolder {
     }
 
     public long getSensorId() {
-        return uuidPool[number];
+        return longPool[number];
     }
 
     public TechnicalData getTechnicalData() {
