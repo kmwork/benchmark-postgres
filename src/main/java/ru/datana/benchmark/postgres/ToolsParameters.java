@@ -23,7 +23,6 @@ public class ToolsParameters {
     private int numberOfPackages;
     private int numberOfSensors;
     private boolean forceRecreate;
-    private ColumnMode mode;
 
     public enum ColumnMode {
         SINGLE, MULTI
@@ -65,9 +64,6 @@ public class ToolsParameters {
                     break;
                 case "-r":
                     parameters.setForceRecreate(Boolean.valueOf(split[1]));
-                    break;
-                case "-m":
-                    parameters.setMode(ColumnMode.valueOf(split[1].toUpperCase()));
                     break;
             }
         });

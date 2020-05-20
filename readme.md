@@ -14,4 +14,4 @@
 ## Нужно поставить расширения на Postgres
 CREATE EXTENSION hstore;
 
--h=172.29.40.41 -p=5432 -l=postgres -w=1 -k=demo -s=1000 -n=10 -c=15000 -r=true -m=MULTI
+-h=172.29.40.41 -p=5432 -l=postgres -w=1 -k=demo -s=1000 -n=10 -c=15000 -r=true

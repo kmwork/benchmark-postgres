@@ -102,46 +102,9 @@ public class DatalakeRepository {
      *
      * @param sensorData данные выборки датчиков
      */
-    public void insertMultiSensorData(MultiSensorDataModel sensorData) throws SQLException {
 
-        StringBuilder sb = new StringBuilder("INSERT INTO ")
-                .append(schemaName).append(".").append(MULTI_SENSOR_TABLE_NAME).append("(")
-                .append("partition_date,")
-                .append("partition_hour,")
-                .append("partition_minute,")
-                .append("request_id,")
-                .append("controller_id,")
-                .append("task_id,")
-                .append("request_datetime,")
-                .append("request_datetime_proxy,")
-                .append("response_datetime,")
-                .append("sensor_map");
-        sb.append(")")
-                .append(" VALUES (")
-                .append("'").append(sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().format(isoDate)).append("',")
-                .append(sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour()).append(",")
-                .append(sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute()).append(",")
-                .append(sensorData.getTechnicalData().getRequestId().toString()).append(",")
-                .append(sensorData.getTechnicalData().getControllerId().toString()).append(",")
-                .append(sensorData.getTechnicalData().getTaskId().toString()).append(",")
-                .append(sensorData.getTechnicalData().getRequestDatetime().getTime()).append(",")
-                .append(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()).append(",")
-                .append(sensorData.getTechnicalData().getResponseDatetime().getTime());
-        sensorData.getSensorData().forEach(sensor -> sb
-                .append(", '")
-                .append("\"sensor_id\" =>\"").append(sensor.getSensorId().toString()).append("\"")
-                .append(", \"data\" => \"").append(sensor.getData()).append("\"")
-                .append(", \"controller_datetime\" => \"").append(sensor.getControllerDatetime().getTime()).append("\"")
-                .append(", \"status\" => \"").append(sensor.getStatus()).append("\"")
-                .append(", \"errors\" => \"").append(getErrorsAsString(sensor.getErrors())).append("\"")
-                .append("'")
-        );
-        sb.append(");");
-        try (Statement st = connection.createStatement()) {
-            log.debug("[SQL:Insert] sql = "+sb);
-            st.execute(sb.toString());
-        }
-    }
+
+
 
     public PreparedStatement createPreparedStatementForSingleSensorDataPackage(int packageSize) throws SQLException {
         StringBuilder sb = new StringBuilder("BEGIN BATCH ");
