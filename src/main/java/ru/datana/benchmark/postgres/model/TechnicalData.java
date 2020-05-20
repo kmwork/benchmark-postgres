@@ -4,14 +4,13 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.sql.Timestamp;
-import java.util.UUID;
 
 @Builder
 @Getter
 public class TechnicalData {
-    private UUID requestId;
-    private UUID controllerId;
-    private UUID taskId;
+    private long requestId;
+    private long controllerId;
+    private long taskId;
     private Timestamp requestDatetime;
     private Timestamp requestDatetimeProxy;
     private Timestamp responseDatetime;

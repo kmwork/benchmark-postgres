@@ -33,7 +33,7 @@ public class DatalakeRepository {
     public void createSingleSensorStructure() throws SQLException {
 
         StringBuilder tableBuilder = createStringBuilderForTableWithTechnicalPart(SINGLE_SENSOR_TABLE_NAME)
-                .append("sensor_id UUID,")
+                .append("sensor_id bigint,")
                 .append("data hstore,")
                 .append("controller_datetime TIMESTAMP,")
                 .append("status SMALLINT,")
@@ -103,7 +103,7 @@ public class DatalakeRepository {
 
 
     public PreparedStatement createPreparedStatementForSingleSensorDataPackage(int packageSize) throws SQLException {
-        StringBuilder sb = new StringBuilder("BEGIN BATCH ");
+        StringBuilder sb = new StringBuilder(1024);
         IntStream.range(0, packageSize).forEach(i -> sb.append("INSERT INTO ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME).append("(")
                 .append("partition_date,")
@@ -123,7 +123,6 @@ public class DatalakeRepository {
                 .append(")")
                 .append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
         );
-        sb.append("APPLY BATCH;");
         return connection.prepareStatement(sb.toString());
     }
 
