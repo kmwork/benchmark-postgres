@@ -6,10 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 import ru.datana.benchmark.postgres.model.TechnicalData;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,26 +75,27 @@ public class DatalakeRepository {
                 .append("response_datetime,")
                 .append("data,")
                 .append(")")
-                .append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);")
+                .append(" VALUES (?,?,?,?,?,?,?,?,?,?);")
         );
         return connection.prepareStatement(sb.toString());
     }
 
     public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<MultiSensorDataModel> sensorDataList) throws SQLException {
         for (MultiSensorDataModel m : sensorDataList) {
-            List<Map<String, Object>> sensorMapList = new ArrayList<>(m.getSensorData().size());
+            StringBuilder sb = new StringBuilder(sensorDataList.size()*512);
+            sb.append("'");
             int index = 0;
             for (var sd : m.getSensorData()) {
                 index++;
                 Map<String, Object> sensorMap = new HashMap<>();
-                sensorMap.put(index + "_sensor_id", sd.getSensorId());
-                sensorMap.put(index + "_data", sd.getData());
-                sensorMap.put(index + "_controller_datetime", sd.getControllerDatetime().getTime());
-                sensorMap.put(index + "_status", sd.getStatus());
-                sensorMap.put(index + "_errors", sd.getErrors().toString());
-                sensorMapList.add(sensorMap);
+                sb.append("\"").append(index).append("_sensor_id\" => \"").append(sd.getSensorId()).append("\"");
+                sb.append(", \"").append(index).append("_data\" => \"").append(sd.getData()).append("\"");
+                sb.append(", \"").append(index).append("_controller_datetime\" => \"").append(sd.getControllerDatetime().getTime()).append("\"");
+                sb.append(", \"").append(index).append("_status\" => \"").append(sd.getStatus()).append("\"");
+                sb.append(", \"").append(index).append("_errors\" => \"").append(sd.getErrors().toString()).append("\"");
             }
-            int paramIndex = 0;
+            sb.append("'");
+            int paramIndex = 1;
 
             TechnicalData t = m.getTechnicalData();
             preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
@@ -109,7 +107,7 @@ public class DatalakeRepository {
             preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
             preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
             preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            preparedStatement.setObject(paramIndex++, sensorMapList);
+            preparedStatement.setString(paramIndex++, sb.toString());
 
             preparedStatement.execute();
         }

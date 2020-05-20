@@ -3,16 +3,13 @@ package ru.datana.benchmark.postgres.filler;
 import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.ToolsParameters;
 import ru.datana.benchmark.postgres.helper.GenerateHelper;
-import ru.datana.benchmark.postgres.helper.SensorPackageHolder;
 import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 import ru.datana.benchmark.postgres.model.SensorData;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -25,7 +22,6 @@ public class SingleSensorToRowFiller extends AbstractFiller {
     public void fillDatabase() throws SQLException {
         try {
             if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure();
-            SensorPackageHolder sensorPackageHolder = new SensorPackageHolder(parameters.getNumberOfSensors());
             var ref = new Object() {
                 long totallyInserted = 0;
                 long insertedBeforeLog = 0;
@@ -35,7 +31,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
             if (parameters.getNumberOfPackages() == ToolsParameters.UNLIMITED_PACKAGES) {
                 //noinspection InfiniteLoopStatement
                 while (true) {
-                    fillPackageAndSaveIt(preparedStatement, parameters.getPackageSize(), sensorPackageHolder);
+                    fillPackageAndSaveIt(preparedStatement, parameters.getPackageSize());
                     ref.totallyInserted += parameters.getPackageSize();
                     ref.insertedBeforeLog += parameters.getPackageSize();
                     if (ref.insertedBeforeLog >= 100000) {
@@ -46,7 +42,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
             } else {
                 IntStream.range(0, parameters.getNumberOfPackages()).forEach(i -> {
                     try {
-                        fillPackageAndSaveIt(preparedStatement, parameters.getPackageSize(), sensorPackageHolder);
+                        fillPackageAndSaveIt(preparedStatement, parameters.getPackageSize());
                     } catch (SQLException e) {
                        String msg = "Error in fillPackageAndSaveIt, i = "+i;
                        log.error(msg, e);
@@ -67,16 +63,16 @@ public class SingleSensorToRowFiller extends AbstractFiller {
         }
     }
 
-    private void fillPackageAndSaveIt(PreparedStatement preparedStatement, int packageSize, SensorPackageHolder sensorPackageHolder) throws SQLException {
+    private void fillPackageAndSaveIt(PreparedStatement preparedStatement, int packageSize) throws SQLException {
         List<MultiSensorDataModel> mList = new ArrayList<>(packageSize);
         for (int i = 0; i< packageSize; i++){
             List<SensorData> sensorList= new ArrayList<>(parameters.getNumberOfSensors());
             for (int s = 0; s< parameters.getNumberOfSensors(); s++) {
-                var sensor = GenerateHelper.generateSensorData(sensorPackageHolder.getSensorId());
+                var sensor = GenerateHelper.generateSensorData(s);
                 sensorList.add(sensor);
             }
             MultiSensorDataModel m = new MultiSensorDataModel();
-            m.setTechnicalData(sensorPackageHolder.next().getTechnicalData());
+            m.setTechnicalData(GenerateHelper.generateTechnicalData());
             m.setSensorData(sensorList);
             mList.add(m);
         }
