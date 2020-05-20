@@ -17,7 +17,7 @@ public class SensorPackageHolder {
         this.count = count;
         this.number = -1;
         this.uuidPool = new long[count];
-        IntStream.range(0, count).forEach(i -> uuidPool[i] = );
+        IntStream.range(0, count).forEach(i -> uuidPool[i] = GenerateHelper.getId());
         packageTime = LocalDateTime.now();
         technicalData = GenerateHelper.generateTechnicalData(packageTime);
     }

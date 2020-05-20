@@ -46,55 +46,16 @@ public class DatalakeRepository {
         }
     }
 
-    /**
-     * Создание структуры на множество датчиков на строку.
-     *
-     * @param numberOfSensors количество датчиков в строке
-     */
-    public void createMultiSensorStructure(int numberOfSensors) throws SQLException {
 
-        StringBuilder typeBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
-                .append(schemaName).append(".").append(SENSOR_DATA_TYPE_NAME).append("(")
-                .append("sensor_id UUID,")
-                .append("data double precision,")
-                .append("controller_datetime TIMESTAMP,")
-                .append("status SMALLINT,")
-                .append("errors VARCHAR(4000),")
-                .append("sensor_map hstore")
-                .append(");");
-
-
-        try (Statement st = connection.createStatement()) {
-            log.debug("[SQL:Create] sql = " + typeBuilder);
-            st.execute(typeBuilder.toString());
-        }
-    }
-
-    /**
-     * Вставка значения единичного датчика в строку
-     *
-     * @param sensorData данные датчика
-     */
-    @Deprecated
-    public void insertSingleSensorData(SingleSensorDataModel sensorData) throws SQLException {
-        try (Statement st = connection.createStatement()) {
-            st.execute(prepareSingleSensorDataInsert(sensorData));
-        }
-    }
 
     /**
      * Вставка значений датчиков в строки пакетом
      *
      * @param sensorDataList - данные датчиков списком
      */
-    @Deprecated
     public void insertSingleSensorDataPackage(List<SingleSensorDataModel> sensorDataList) throws SQLException {
-        StringBuilder sb = new StringBuilder("BEGIN");
-        sensorDataList.forEach(sensorData -> sb.append(prepareSingleSensorDataInsert(sensorData)));
-        sb.append("APPLY BATCH;");
-        try (Statement st = connection.createStatement()) {
-            st.execute(sb.toString());
-        }
+        PreparedStatement p = createPreparedStatementForSingleSensorDataPackage(sensorDataList.size());
+        insertSingleSensorDataPackageWithPreparedStatement(p, sensorDataList);
     }
 
     /**
@@ -126,8 +87,7 @@ public class DatalakeRepository {
         return connection.prepareStatement(sb.toString());
     }
 
-    @SneakyThrows
-    public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<SingleSensorDataModel> sensorDataList) {
+    public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<SingleSensorDataModel> sensorDataList) throws SQLException {
         var ref = new Object() {
             int i = 1;
         };
@@ -136,13 +96,13 @@ public class DatalakeRepository {
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour());
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute());
-                preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getRequestId().toString());
-                preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getControllerId().toString());
-                preparedStatement.setString(ref.i++, sensorData.getTechnicalData().getTaskId().toString());
+                preparedStatement.setLong(ref.i++, sensorData.getTechnicalData().getRequestId());
+                preparedStatement.setLong(ref.i++, sensorData.getTechnicalData().getControllerId());
+                preparedStatement.setLong(ref.i++, sensorData.getTechnicalData().getTaskId());
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetime().getTime()));
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()));
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
-                preparedStatement.setString(ref.i++, sensorData.getSensorData().getSensorId().toString());
+                preparedStatement.setLong(ref.i++, sensorData.getSensorData().getSensorId());
                 preparedStatement.setDouble(ref.i++, sensorData.getSensorData().getData());
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getSensorData().getStatus());
@@ -166,42 +126,6 @@ public class DatalakeRepository {
                 .collect(Collectors.joining(",", "{", "}"));
     }
 
-    @Deprecated
-    private String prepareSingleSensorDataInsert(SingleSensorDataModel sensorData) {
-        return new StringBuilder("INSERT INTO ")
-                .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME).append("(")
-                .append("partition_date,")
-                .append("partition_hour,")
-                .append("partition_minute,")
-                .append("request_id,")
-                .append("controller_id,")
-                .append("task_id,")
-                .append("request_datetime,")
-                .append("request_datetime_proxy,")
-                .append("response_datetime,")
-                .append("sensor_id,")
-                .append("data,")
-                .append("controller_datetime,")
-                .append("status,")
-                .append("errors")
-                .append(")")
-                .append(" VALUES (")
-                .append("'").append(sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().format(isoDate)).append("',")
-                .append(sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour()).append(",")
-                .append(sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute()).append(",")
-                .append(sensorData.getTechnicalData().getRequestId().toString()).append(",")
-                .append(sensorData.getTechnicalData().getControllerId().toString()).append(",")
-                .append(sensorData.getTechnicalData().getTaskId().toString()).append(",")
-                .append(sensorData.getTechnicalData().getRequestDatetime().getTime()).append(",")
-                .append(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()).append(",")
-                .append(sensorData.getTechnicalData().getResponseDatetime().getTime()).append(",")
-                .append(sensorData.getSensorData().getSensorId().toString()).append(",")
-                .append(sensorData.getSensorData().getData()).append(",")
-                .append(sensorData.getSensorData().getControllerDatetime().getTime()).append(",")
-                .append(sensorData.getSensorData().getStatus()).append(",")
-                .append(getErrorsAsString(sensorData.getSensorData().getErrors()))
-                .append(");").toString();
-    }
 
     private StringBuilder createStringBuilderForTableWithTechnicalPart(String tableName) {
         return new StringBuilder("CREATE TABLE IF NOT EXISTS ")
