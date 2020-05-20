@@ -1,15 +1,11 @@
 package ru.datana.benchmark.postgres.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Singular;
+import lombok.*;
 
 import java.util.List;
 
-@Builder
-@Getter
+@Data
 public class MultiSensorDataModel {
     private TechnicalData technicalData;
-    @Singular("addSensorData")
     private List<SensorData> sensorData;
 }

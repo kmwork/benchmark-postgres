@@ -3,19 +3,18 @@ package ru.datana.benchmark.postgres.repository;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.datana.benchmark.postgres.model.SensorData;
-import ru.datana.benchmark.postgres.model.SingleSensorDataModel;
+import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
+import ru.datana.benchmark.postgres.model.TechnicalData;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -54,7 +53,7 @@ public class DatalakeRepository {
      *
      * @param sensorDataList - данные датчиков списком
      */
-    public void insertSingleSensorDataPackage(List<SingleSensorDataModel> sensorDataList) throws SQLException {
+    public void insertSingleSensorDataPackage(List<MultiSensorDataModel> sensorDataList) throws SQLException {
         PreparedStatement p = createPreparedStatementForSingleSensorDataPackage(sensorDataList.size());
         insertSingleSensorDataPackageWithPreparedStatement(p, sensorDataList);
     }
@@ -77,63 +76,46 @@ public class DatalakeRepository {
                 .append("request_datetime,")
                 .append("request_datetime_proxy,")
                 .append("response_datetime,")
-                .append("sensor_id,")
                 .append("data,")
-                .append("controller_datetime,")
-                .append("status,")
-                .append("errors")
                 .append(")")
-                .append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
+                .append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);")
         );
         return connection.prepareStatement(sb.toString());
     }
 
-    public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<SingleSensorDataModel> sensorDataList) throws SQLException {
-        var ref = new Object() {
-            int i = 1;
-        };
-        sensorDataList.forEach(sensorData -> {
-            try {
-                SensorData sd = sensorData.getSensorData();
+    public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<MultiSensorDataModel> sensorDataList) throws SQLException {
+        for (MultiSensorDataModel m : sensorDataList) {
+            List<Map<String, Object>> sensorMapList = new ArrayList<>(m.getSensorData().size());
+            int index = 0;
+            for (var sd : m.getSensorData()) {
+                index++;
                 Map<String, Object> sensorMap = new HashMap<>();
-                sensorMap.put("sensor_id", sd.getSensorId());
-                sensorMap.put("data", sd.getData());
-                sensorMap.put("controller_datetime", sd.getControllerDatetime().getTime());
-                sensorMap.put("status", sd.getStatus());
-                sensorMap.put("errors", getErrorsAsString(sd.getErrors()));
-
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
-                preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour());
-                preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getMinute());
-                preparedStatement.setLong(ref.i++, sensorData.getTechnicalData().getRequestId());
-                preparedStatement.setLong(ref.i++, sensorData.getTechnicalData().getControllerId());
-                preparedStatement.setLong(ref.i++, sensorData.getTechnicalData().getTaskId());
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetime().getTime()));
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()));
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
-                preparedStatement.setLong(ref.i++, sensorData.getSensorData().getSensorId());
-                preparedStatement.setObject(ref.i++, sensorMap);
-                preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime()));
-                preparedStatement.setInt(ref.i++, sensorData.getSensorData().getStatus());
-                preparedStatement.setString(ref.i++, sensorData.getSensorData().getErrors().toString());
-            } catch (SQLException e) {
-                String msg = "Error  in insertSingleSensorDataPackageWithPreparedStatement  of lamda i = " + ref.i;
-                System.err.println(msg);
-                e.printStackTrace();
-                throw new RuntimeException(msg, e);
+                sensorMap.put(index + "_sensor_id", sd.getSensorId());
+                sensorMap.put(index + "_data", sd.getData());
+                sensorMap.put(index + "_controller_datetime", sd.getControllerDatetime().getTime());
+                sensorMap.put(index + "_status", sd.getStatus());
+                sensorMap.put(index + "_errors", sd.getErrors().toString());
+                sensorMapList.add(sensorMap);
             }
-        });
-        preparedStatement.execute();
+            int paramIndex = 0;
+
+            TechnicalData t = m.getTechnicalData();
+            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+            preparedStatement.setInt(paramIndex++, t.getResponseDatetime().toLocalDateTime().getHour());
+            preparedStatement.setInt(paramIndex++, t.getResponseDatetime().toLocalDateTime().getMinute());
+            preparedStatement.setLong(paramIndex++, t.getRequestId());
+            preparedStatement.setLong(paramIndex++, t.getControllerId());
+            preparedStatement.setLong(paramIndex++, t.getTaskId());
+            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
+            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
+            preparedStatement.setTimestamp(paramIndex++, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+            preparedStatement.setObject(paramIndex++, sensorMapList);
+
+            preparedStatement.execute();
+        }
     }
 
-    //------------------------- private block -------------------------
-
-    @Deprecated
-    private String getErrorsAsString(Set<String> errors) {
-        return errors.stream()
-                .map(error -> "'" + error + "'")
-                .collect(Collectors.joining(",", "{", "}"));
-    }
+//------------------------- private block -------------------------
 
 
     private StringBuilder createStringBuilderForTableWithTechnicalPart(String tableName) {

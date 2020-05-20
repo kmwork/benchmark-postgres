@@ -4,10 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.ToolsParameters;
 import ru.datana.benchmark.postgres.helper.GenerateHelper;
 import ru.datana.benchmark.postgres.helper.SensorPackageHolder;
-import ru.datana.benchmark.postgres.model.SingleSensorDataModel;
+import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
+import ru.datana.benchmark.postgres.model.SensorData;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -64,12 +68,20 @@ public class SingleSensorToRowFiller extends AbstractFiller {
     }
 
     private void fillPackageAndSaveIt(PreparedStatement preparedStatement, int packageSize, SensorPackageHolder sensorPackageHolder) throws SQLException {
-        datalakeRepository.insertSingleSensorDataPackageWithPreparedStatement(preparedStatement, IntStream.range(0, packageSize)
-                .mapToObj(i -> SingleSensorDataModel.builder()
-                        .technicalData(sensorPackageHolder.next().getTechnicalData())
-                        .sensorData(GenerateHelper.generateSensorData(sensorPackageHolder.getSensorId()))
-                        .build())
-                .collect(Collectors.toList()));
+        List<MultiSensorDataModel> mList = new ArrayList<>(packageSize);
+        for (int i = 0; i< packageSize; i++){
+            List<SensorData> sensorList= new ArrayList<>(parameters.getNumberOfSensors());
+            for (int s = 0; s< parameters.getNumberOfSensors(); s++) {
+                var sensor = GenerateHelper.generateSensorData(sensorPackageHolder.getSensorId());
+                sensorList.add(sensor);
+            }
+            MultiSensorDataModel m = new MultiSensorDataModel();
+            m.setTechnicalData(sensorPackageHolder.next().getTechnicalData());
+            m.setSensorData(sensorList);
+            mList.add(m);
+        }
+
+        datalakeRepository.insertSingleSensorDataPackageWithPreparedStatement(preparedStatement, mList);
     }
 
 }
