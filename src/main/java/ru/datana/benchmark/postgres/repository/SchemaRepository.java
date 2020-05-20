@@ -22,9 +22,9 @@ public class SchemaRepository {
     }
 
     public void dropSchema(String schemaName) throws SQLException {
-        StringBuilder sb = new StringBuilder("DROP SCHEMA CASCADE IF NOT EXISTS ")
+        StringBuilder sb = new StringBuilder("DROP SCHEMA IF EXISTS ")
                 .append(schemaName)
-                .append(";");
+                .append(" CASCADE;");
 
         String query = sb.toString();
         try(Statement stm = connection.createStatement()) {

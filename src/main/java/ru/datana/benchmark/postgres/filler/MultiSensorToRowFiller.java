@@ -32,7 +32,7 @@ public class MultiSensorToRowFiller extends AbstractFiller {
                     try {
                         fillRowAndSaveIt(parameters.getPackageSize());
                     } catch (SQLException e) {
-                        String msg = "Error in lamda of fillDatabase";
+                        String msg = "Error in lamda of fillDatabase, i = "+ i;
                         log.error(msg, e);
                         throw new RuntimeException(msg, e);
                     }

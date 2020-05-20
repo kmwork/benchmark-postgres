@@ -50,14 +50,13 @@ public class DatalakeRepository {
      * Создание структуры на множество датчиков на строку.
      *
      * @param numberOfSensors количество датчиков в строке
-     * @param forceDrop       нужно ли удалять структуру перед созданием, обязательно, если количество столбцов меняется
      */
     public void createMultiSensorStructure(int numberOfSensors) throws SQLException {
 
         StringBuilder typeBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
                 .append(schemaName).append(".").append(SENSOR_DATA_TYPE_NAME).append("(")
                 .append("sensor_id UUID,")
-                .append("data DOUBLE,")
+                .append("data double precision,")
                 .append("controller_datetime TIMESTAMP,")
                 .append("status SMALLINT,")
                 .append("errors VARCHAR(4000),")
@@ -66,6 +65,7 @@ public class DatalakeRepository {
 
 
         try (Statement st = connection.createStatement()) {
+            log.debug("[SQL:Create] sql = "+typeBuilder);
             st.execute(typeBuilder.toString());
         }
     }
@@ -129,15 +129,16 @@ public class DatalakeRepository {
                 .append(sensorData.getTechnicalData().getResponseDatetime().getTime());
         sensorData.getSensorData().forEach(sensor -> sb
                 .append(", '")
-                .append("\"sensor_id\" => ").append(sensor.getSensorId().toString())
-                .append(", \"data\" =>").append(sensor.getData())
-                .append(", \"controller_datetime\" =>").append(sensor.getControllerDatetime().getTime())
-                .append(", \"status\" =>").append(sensor.getStatus())
-                .append(", \"errors\" =>").append(getErrorsAsString(sensor.getErrors()))
+                .append("\"sensor_id\" =>\"").append(sensor.getSensorId().toString()).append("\"")
+                .append(", \"data\" => \"").append(sensor.getData()).append("\"")
+                .append(", \"controller_datetime\" => \"").append(sensor.getControllerDatetime().getTime()).append("\"")
+                .append(", \"status\" => \"").append(sensor.getStatus()).append("\"")
+                .append(", \"errors\" => \"").append(getErrorsAsString(sensor.getErrors())).append("\"")
                 .append("'")
         );
         sb.append(");");
         try (Statement st = connection.createStatement()) {
+            log.debug("[SQL:Insert] sql = "+sb);
             st.execute(sb.toString());
         }
     }
