@@ -99,8 +99,6 @@ public class DatalakeRepository {
 
     /**
      * Вставка значения единичной выборки датчиков в строку
-     *
-     * @param sensorData данные выборки датчиков
      */
 
 
@@ -131,9 +129,8 @@ public class DatalakeRepository {
 
     @SneakyThrows
     public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<SingleSensorDataModel> sensorDataList) {
-        Object[] params = new Object[sensorDataList.size() * 14];
         var ref = new Object() {
-            int i = 0;
+            int i = 1;
         };
         sensorDataList.forEach(sensorData -> {
             try {
