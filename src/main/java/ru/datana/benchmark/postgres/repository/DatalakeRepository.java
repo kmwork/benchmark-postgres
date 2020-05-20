@@ -11,7 +11,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -93,15 +95,12 @@ public class DatalakeRepository {
         sensorDataList.forEach(sensorData -> {
             try {
                 SensorData sd = sensorData.getSensorData();
-                StringBuilder sb = new StringBuilder(1024);
-                sb
-                        .append("'")
-                        .append("\"sensor_id\" => \"").append(sd.getSensorId()).append("\"")
-                        .append(", \"data\" =>\"").append(sd.getData()).append("\"")
-                        .append(", \"controller_datetime\" => \"").append(sd.getControllerDatetime().getTime()).append("\"")
-                        .append(", \"status\" => \"").append(sd.getStatus()).append("\"")
-                        .append(", \"errors\" => \"").append(getErrorsAsString(sd.getErrors())).append("\"")
-                        .append("'");
+                Map<String, Object> sensorMap = new HashMap<>();
+                sensorMap.put("sensor_id", sd.getSensorId());
+                sensorMap.put("data", sd.getData());
+                sensorMap.put("controller_datetime", sd.getControllerDatetime().getTime());
+                sensorMap.put("status", sd.getStatus());
+                sensorMap.put("errors", getErrorsAsString(sd.getErrors()));
 
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getTechnicalData().getResponseDatetime().toLocalDateTime().getHour());
@@ -113,7 +112,7 @@ public class DatalakeRepository {
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getRequestDatetimeProxy().getTime()));
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getTechnicalData().getResponseDatetime().getTime()));
                 preparedStatement.setLong(ref.i++, sensorData.getSensorData().getSensorId());
-                preparedStatement.setString(ref.i++, sb.toString());
+                preparedStatement.setObject(ref.i++, sensorMap);
                 preparedStatement.setTimestamp(ref.i++, new java.sql.Timestamp(sensorData.getSensorData().getControllerDatetime().getTime()));
                 preparedStatement.setInt(ref.i++, sensorData.getSensorData().getStatus());
                 preparedStatement.setString(ref.i++, sensorData.getSensorData().getErrors().toString());
