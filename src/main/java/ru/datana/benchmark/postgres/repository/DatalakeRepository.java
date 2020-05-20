@@ -40,7 +40,7 @@ public class DatalakeRepository {
                 .append("controller_datetime TIMESTAMP,")
                 .append("status SMALLINT,")
                 .append("errors VARCHAR(4000),")
-                .append("PRIMARY KEY (partition_date, partition_hour, partition_minute)")
+                .append("PRIMARY KEY (partition_date, partition_hour, partition_minute, sensor_id)")
                 .append(");");
         try (Statement st = connection.createStatement()) {
             log.debug("[SQL:Create] sql = " + tableBuilder);
