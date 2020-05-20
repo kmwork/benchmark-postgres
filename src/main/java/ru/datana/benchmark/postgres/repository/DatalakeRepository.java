@@ -61,7 +61,7 @@ public class DatalakeRepository {
      */
     public void insertSingleSensorDataPackage(List<MultiSensorDataModel> sensorDataList) throws SQLException {
         PreparedStatement p = createPreparedStatementForSingleSensorDataPackage(sensorDataList.size());
-        insertSingleSensorDataPackageWithPreparedStatement(p, sensorDataList);
+        insertData(p, sensorDataList);
     }
 
     /**
@@ -87,11 +87,11 @@ public class DatalakeRepository {
                 .append(" VALUES (?,?,?,?,?,?,?,?,?,?);")
 
         );
-        log.debug("[SQL:Prepared-Insert] sql = "+sb);
+        log.debug("[SQL:Prepared-Insert] sql = " + sb);
         return connection.prepareStatement(sb.toString());
     }
 
-    public void insertSingleSensorDataPackageWithPreparedStatement(PreparedStatement preparedStatement, List<MultiSensorDataModel> sensorDataList) throws SQLException {
+    public void insertData(PreparedStatement p, List<MultiSensorDataModel> sensorDataList) throws SQLException {
         log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
         for (MultiSensorDataModel m : sensorDataList) {
             StringBuilder sb = new StringBuilder(sensorDataList.size() * 512);
@@ -116,23 +116,22 @@ public class DatalakeRepository {
 
             TechnicalData t = m.getTechnicalData();
 
-            preparedStatement.setTimestamp(1, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            preparedStatement.setInt(2, t.getResponseDatetime().toLocalDateTime().getHour());
-            preparedStatement.setInt(3, t.getResponseDatetime().toLocalDateTime().getMinute());
-            preparedStatement.setLong(4, t.getRequestId());
-            preparedStatement.setLong(5, t.getControllerId());
-            preparedStatement.setLong(6, t.getTaskId());
-            preparedStatement.setTimestamp(7, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
-            preparedStatement.setTimestamp(8, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
-            preparedStatement.setTimestamp(9, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            preparedStatement.setString(10, sb.toString());
+            p.setTimestamp(1, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+            p.setInt(2, t.getResponseDatetime().toLocalDateTime().getHour());
+            p.setInt(3, t.getResponseDatetime().toLocalDateTime().getMinute());
+            p.setLong(4, t.getRequestId());
+            p.setLong(5, t.getControllerId());
+            p.setLong(6, t.getTaskId());
+            p.setTimestamp(7, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
+            p.setTimestamp(8, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
+            p.setTimestamp(9, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+            p.setString(10, sb.toString());
 
-            preparedStatement.execute();
+            p.execute();
         }
     }
 
 //------------------------- private block -------------------------
-
 
 
 }
