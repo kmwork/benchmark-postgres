@@ -4,7 +4,6 @@ package ru.datana.benchmark.postgres.repository;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 import ru.datana.benchmark.postgres.model.SingleSensorDataModel;
 
 import java.sql.Connection;
@@ -35,13 +34,14 @@ public class DatalakeRepository {
 
         StringBuilder tableBuilder = createStringBuilderForTableWithTechnicalPart(SINGLE_SENSOR_TABLE_NAME)
                 .append("sensor_id UUID,")
-                .append("data DOUBLE,")
+                .append("data hstore,")
                 .append("controller_datetime TIMESTAMP,")
                 .append("status SMALLINT,")
                 .append("errors VARCHAR(4000),")
                 .append("PRIMARY KEY (partition_date, partition_hour, partition_minute)")
                 .append(");");
         try (Statement st = connection.createStatement()) {
+            log.debug("[SQL:Create] sql = " + tableBuilder);
             st.execute(tableBuilder.toString());
         }
     }
@@ -65,7 +65,7 @@ public class DatalakeRepository {
 
 
         try (Statement st = connection.createStatement()) {
-            log.debug("[SQL:Create] sql = "+typeBuilder);
+            log.debug("[SQL:Create] sql = " + typeBuilder);
             st.execute(typeBuilder.toString());
         }
     }
@@ -102,8 +102,6 @@ public class DatalakeRepository {
      *
      * @param sensorData данные выборки датчиков
      */
-
-
 
 
     public PreparedStatement createPreparedStatementForSingleSensorDataPackage(int packageSize) throws SQLException {
@@ -214,8 +212,8 @@ public class DatalakeRepository {
                 .append(schemaName).append(".").append(tableName)
                 .append("(")
                 .append("partition_date DATE,")
-                .append("partition_hour TINYINT,")
-                .append("partition_minute TINYINT,")
+                .append("partition_hour SMALLINT,")
+                .append("partition_minute SMALLINT,")
                 .append("request_id UUID,")
                 .append("controller_id UUID,")
                 .append("task_id UUID,")
