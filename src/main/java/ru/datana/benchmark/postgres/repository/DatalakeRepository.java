@@ -60,7 +60,7 @@ public class DatalakeRepository {
      * @param sensorDataList - данные датчиков списком
      */
     public void insertSingleSensorDataPackage(List<MultiSensorDataModel> sensorDataList) throws SQLException {
-        PreparedStatement p = createPreparedStatementForSingleSensorDataPackage(sensorDataList.size());
+        PreparedStatement p = createSQL();
         insertData(p, sensorDataList);
     }
 
@@ -69,9 +69,9 @@ public class DatalakeRepository {
      */
 
 
-    public PreparedStatement createPreparedStatementForSingleSensorDataPackage(int packageSize) throws SQLException {
+    public PreparedStatement createSQL() throws SQLException {
         StringBuilder sb = new StringBuilder(1024);
-        IntStream.range(0, packageSize).forEach(i -> sb.append("INSERT INTO ")
+        sb.append("INSERT INTO ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME).append("(")
                 .append("partition_date,")
                 .append("partition_hour,")
@@ -84,9 +84,8 @@ public class DatalakeRepository {
                 .append("response_datetime,")
                 .append("data")
                 .append(")")
-                .append(" VALUES (?,?,?,?,?,?,?,?,?,?);")
+                .append(" VALUES (?,?,?,?,?,?,?,?,?,cast(? as hstore));");
 
-        );
         log.debug("[SQL:Prepared-Insert] sql = " + sb);
         return connection.prepareStatement(sb.toString());
     }
@@ -95,12 +94,12 @@ public class DatalakeRepository {
         log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
         for (MultiSensorDataModel m : sensorDataList) {
             StringBuilder sb = new StringBuilder(sensorDataList.size() * 512);
-            sb.append("'");
             int index = 0;
             for (var sd : m.getSensorData()) {
 
-                if (index != 0)
+                if (sb.length() != 0)
                     sb.append(",");
+
                 index++;
 
                 Map<String, Object> sensorMap = new HashMap<>();
@@ -110,7 +109,6 @@ public class DatalakeRepository {
                 sb.append(", \"").append(index).append("_status\" => \"").append(sd.getStatus()).append("\"");
                 sb.append(", \"").append(index).append("_errors\" => \"").append(sd.getErrors().toString()).append("\"");
             }
-            sb.append("'");
 
             log.debug("[Insert:Data] m = " + m);
 

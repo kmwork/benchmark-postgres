@@ -13,5 +13,10 @@
 ## Нужно поставить расширения на Postgres
 CREATE EXTENSION hstore;
 
--h=172.29.40.41 -p=5432 -l=postgres -w=1 -k=demo -s=1000 -n=10 -c=15000 -r=true
--h="172.29.40.41" -p=5432 -l=postgres -w=1 -k=demo -s=1 -n=10 -c=15000 -r=true
+### Как собрать приложение
+нужен Maven 3 и OpenJDK от 11 и выше
+`mvn clean compile package`
+
+## Как запустить тест
+в папке etc командный файл `run-test-on-linux.sh`
+там нужно прописать путь к яве

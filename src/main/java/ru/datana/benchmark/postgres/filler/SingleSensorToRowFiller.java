@@ -25,12 +25,13 @@ public class SingleSensorToRowFiller extends AbstractFiller {
                 long totallyInserted = 0;
                 long insertedBeforeLog = 0;
             };
-            PreparedStatement p = datalakeRepository.createPreparedStatementForSingleSensorDataPackage(parameters.getPackageSize());
+            PreparedStatement p = datalakeRepository.createSQL();
             long start = System.currentTimeMillis();
             int step = 0;
             while (true) {
                 if (step >= parameters.getNumberOfPackages() && parameters.getNumberOfPackages() != ToolsParameters.UNLIMITED_PACKAGES)
                     break;
+                step++;
 
                 fillPackageAndSaveIt(p, parameters.getPackageSize());
                 ref.totallyInserted += parameters.getPackageSize();
