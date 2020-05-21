@@ -17,7 +17,9 @@ CREATE EXTENSION hstore;
 
 ### Как собрать приложение
 нужен Maven 3 и OpenJDK от 11 и выше
-`mvn clean compile package`
+```
+mvn clean compile package spring-boot:repackage 
+```
 
 ## Как запустить тест
 в папке etc командный файл `run-test-on-linux.sh`
