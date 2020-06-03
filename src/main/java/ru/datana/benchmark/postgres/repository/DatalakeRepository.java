@@ -1,18 +1,13 @@
 package ru.datana.benchmark.postgres.repository;
 
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.ToolsParameters;
-import ru.datana.benchmark.postgres.helper.GenerateHelper;
 import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 import ru.datana.benchmark.postgres.model.SensorData;
 import ru.datana.benchmark.postgres.model.TechnicalData;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -29,9 +24,9 @@ public class DatalakeRepository {
     protected final Connection connection;
     protected final String schemaName;
 
-    public DatalakeRepository(ToolsParameters parameters,  Connection connection, String schemaName) {
+    public DatalakeRepository(ToolsParameters parameters, Connection connection, String schemaName) {
         this.parameters = parameters;
-        this.connection =connection;
+        this.connection = connection;
         this.schemaName = schemaName;
     }
 
@@ -106,6 +101,7 @@ public class DatalakeRepository {
     public void insertData(PreparedStatement p, List<MultiSensorDataModel> sensorDataList) throws SQLException {
         log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
         for (MultiSensorDataModel m : sensorDataList) {
+            SensorData sensorDataSingle = m.getSensorData().get(0);
             if (parameters.getNumberOfSensors() > 1) {
                 StringBuilder sb = new StringBuilder(sensorDataList.size() * 512);
                 int index = 0;
@@ -124,11 +120,8 @@ public class DatalakeRepository {
                     sb.append(", \"").append(index).append("_errors\" => \"").append(sd.getErrors().toString()).append("\"");
 
                 }
-                p.setString(8, null);
                 p.setString(11, sb.toString());
-            }else {
-                SensorData sensorDataSingle = m.getSensorData().get(0);
-                p.setString(8,sensorDataSingle.getSensorId().toString());
+            } else {
                 p.setDouble(11, sensorDataSingle.getData());
             }
 
@@ -139,11 +132,11 @@ public class DatalakeRepository {
             p.setTimestamp(1, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
             p.setInt(2, t.getResponseDatetime().toLocalDateTime().getHour());
             p.setInt(3, t.getResponseDatetime().toLocalDateTime().getMinute());
-            p.setString(4, t.getRequestId().toString());
-            p.setString(5, t.getControllerId().toString());
-            p.setString(6, t.getTaskId().toString());
+            p.setObject(4, t.getRequestId().toString(), Types.OTHER);
+            p.setObject(5, t.getControllerId().toString(), Types.OTHER);
+            p.setObject(6, t.getTaskId().toString(), Types.OTHER);
             p.setTimestamp(7, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
-            //set UUID Sensor
+            p.setObject(8, sensorDataSingle.getSensorId().toString(), Types.OTHER);
             p.setTimestamp(9, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
             p.setTimestamp(10, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
             //set Data
