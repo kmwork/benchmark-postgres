@@ -35,7 +35,7 @@ public class DatalakeRepository {
      */
     public void createSingleSensorStructure() throws SQLException {
 
-        String dataAsText = parameters.getMode() == ToolsParameters.ColumnMode.SINGLE ? "data double null," : "data hstore null,";
+        String dataAsText = parameters.getMode() == ToolsParameters.ColumnMode.SINGLE ? "data decimal null," : "data hstore null,";
         StringBuilder tableBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME)
                 .append("(")
