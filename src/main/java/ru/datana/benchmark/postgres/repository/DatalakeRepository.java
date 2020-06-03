@@ -98,51 +98,62 @@ public class DatalakeRepository {
         return connection.prepareStatement(sb.toString());
     }
 
+    private String generateHStore(MultiSensorDataModel m) {
+        StringBuilder sb = new StringBuilder(parameters.getNumberOfSensors() * 512);
+        for (SensorData sensorDataSingle : m.getSensorData()) {
+
+            int index = 0;
+            for (var sd : m.getSensorData()) {
+
+                if (sb.length() != 0)
+                    sb.append(",");
+
+                index++;
+
+                Map<String, Object> sensorMap = new HashMap<>();
+                sb.append("\"").append(index).append("_sensor_id\" => \"").append(sd.getSensorId()).append("\"");
+                sb.append(", \"").append(index).append("_data\" => \"").append(sd.getData()).append("\"");
+                sb.append(", \"").append(index).append("_controller_datetime\" => \"").append(sd.getControllerDatetime().getTime()).append("\"");
+                sb.append(", \"").append(index).append("_status\" => \"").append(sd.getStatus()).append("\"");
+                sb.append(", \"").append(index).append("_errors\" => \"").append(sd.getErrors().toString()).append("\"");
+
+            }
+
+        }
+        return sb.toString();
+    }
+
+    private void setParamsToSQL(PreparedStatement p, TechnicalData t, SensorData sensorDataSingle) throws SQLException {
+        p.setTimestamp(1, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+        p.setInt(2, t.getResponseDatetime().toLocalDateTime().getHour());
+        p.setInt(3, t.getResponseDatetime().toLocalDateTime().getMinute());
+        p.setObject(4, t.getRequestId().toString(), Types.OTHER);
+        p.setObject(5, t.getControllerId().toString(), Types.OTHER);
+        p.setObject(6, t.getTaskId().toString(), Types.OTHER);
+        p.setTimestamp(7, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
+        p.setObject(8, sensorDataSingle.getSensorId().toString(), Types.OTHER);
+        p.setTimestamp(9, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
+        p.setTimestamp(10, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
+    }
+
     public void insertData(PreparedStatement p, List<MultiSensorDataModel> sensorDataList) throws SQLException {
         log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
         for (MultiSensorDataModel m : sensorDataList) {
-            SensorData sensorDataSingle = m.getSensorData().get(0);
             if (parameters.getMode() == ToolsParameters.ColumnMode.MULTI) {
-                StringBuilder sb = new StringBuilder(sensorDataList.size() * 512);
-                int index = 0;
-                for (var sd : m.getSensorData()) {
-
-                    if (sb.length() != 0)
-                        sb.append(",");
-
-                    index++;
-
-                    Map<String, Object> sensorMap = new HashMap<>();
-                    sb.append("\"").append(index).append("_sensor_id\" => \"").append(sd.getSensorId()).append("\"");
-                    sb.append(", \"").append(index).append("_data\" => \"").append(sd.getData()).append("\"");
-                    sb.append(", \"").append(index).append("_controller_datetime\" => \"").append(sd.getControllerDatetime().getTime()).append("\"");
-                    sb.append(", \"").append(index).append("_status\" => \"").append(sd.getStatus()).append("\"");
-                    sb.append(", \"").append(index).append("_errors\" => \"").append(sd.getErrors().toString()).append("\"");
+                String hstore = generateHStore(m);
+                p.setString(11, hstore);
+                setParamsToSQL(p, m.getTechnicalData(), m.getSensorData().get(0));
+                p.execute();
+            } else
+                for (SensorData sensorDataSingle : m.getSensorData()) {
+                    setParamsToSQL(p, m.getTechnicalData(), sensorDataSingle);
+                    p.setDouble(11, sensorDataSingle.getData());
+                    p.execute();
 
                 }
-                p.setString(11, sb.toString());
-            } else {
-                p.setDouble(11, sensorDataSingle.getData());
-            }
-
             log.debug("[Insert:Data] m = " + m);
-
-            TechnicalData t = m.getTechnicalData();
-
-            p.setTimestamp(1, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            p.setInt(2, t.getResponseDatetime().toLocalDateTime().getHour());
-            p.setInt(3, t.getResponseDatetime().toLocalDateTime().getMinute());
-            p.setObject(4, t.getRequestId().toString(), Types.OTHER);
-            p.setObject(5, t.getControllerId().toString(), Types.OTHER);
-            p.setObject(6, t.getTaskId().toString(), Types.OTHER);
-            p.setTimestamp(7, new java.sql.Timestamp(t.getRequestDatetime().getTime()));
-            p.setObject(8, sensorDataSingle.getSensorId().toString(), Types.OTHER);
-            p.setTimestamp(9, new java.sql.Timestamp(t.getRequestDatetimeProxy().getTime()));
-            p.setTimestamp(10, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
-            //set Data
-
-            p.execute();
         }
+
     }
 
 //------------------------- private block -------------------------
