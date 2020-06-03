@@ -35,7 +35,7 @@ public class DatalakeRepository {
      */
     public void createSingleSensorStructure() throws SQLException {
 
-        String dataAsText = parameters.getNumberOfSensors() == 1 ? "data double null," : "data hstore null,";
+        String dataAsText = parameters.getMode() == ToolsParameters.ColumnMode.SINGLE ? "data double null," : "data hstore null,";
         StringBuilder tableBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME)
                 .append("(")
@@ -76,7 +76,7 @@ public class DatalakeRepository {
 
     public PreparedStatement createSQL() throws SQLException {
         StringBuilder sb = new StringBuilder(1024);
-        String dataType = parameters.getNumberOfSensors() == 1 ? "?" : "cast(? as hstore)";
+        String dataType = parameters.getMode() == ToolsParameters.ColumnMode.SINGLE ? "?" : "cast(? as hstore)";
         sb.append("INSERT INTO ")
                 .append(schemaName).append(".").append(SINGLE_SENSOR_TABLE_NAME).append("(")
                 .append("partition_date,")
@@ -102,7 +102,7 @@ public class DatalakeRepository {
         log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
         for (MultiSensorDataModel m : sensorDataList) {
             SensorData sensorDataSingle = m.getSensorData().get(0);
-            if (parameters.getNumberOfSensors() > 1) {
+            if (parameters.getMode() == ToolsParameters.ColumnMode.MULTI) {
                 StringBuilder sb = new StringBuilder(sensorDataList.size() * 512);
                 int index = 0;
                 for (var sd : m.getSensorData()) {
