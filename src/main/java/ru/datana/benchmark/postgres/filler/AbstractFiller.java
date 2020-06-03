@@ -27,7 +27,7 @@ public abstract class AbstractFiller {
         client.connect(host, port, login, password);
         connection = client.getConnection();
         schemaRepository = new SchemaRepository(connection);
-        datalakeRepository = new DatalakeRepository(connection, schemaName);
+        datalakeRepository = new DatalakeRepository(parameters, connection, schemaName);
     }
 
     protected void closeConnection() throws SQLException {

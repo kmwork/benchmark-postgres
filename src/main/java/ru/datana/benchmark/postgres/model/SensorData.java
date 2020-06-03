@@ -7,12 +7,13 @@ import lombok.ToString;
 
 import java.sql.Timestamp;
 import java.util.Set;
+import java.util.UUID;
 
 @Builder
 @Getter
 @ToString
 public class SensorData {
-    private long sensorId;
+    private UUID sensorId;
     private double data;
     private Timestamp controllerDatetime;
     private byte status;

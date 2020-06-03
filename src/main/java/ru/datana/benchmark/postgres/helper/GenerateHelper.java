@@ -7,11 +7,13 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GenerateHelper {
     private static Random generator = new Random(System.nanoTime());
+    private static final String SENSOR_UUID_TEMPLATE = "00000000-0000-4000-9000-%012d";
     private static final int GENERATOR_SIX_MONTH_BOUND = 60 * 60 * 24 * 30 * 6;
     private static long nextId = System.nanoTime();
 
@@ -25,9 +27,9 @@ public class GenerateHelper {
 
     public static TechnicalData generateTechnicalData(LocalDateTime responseTime) {
         return TechnicalData.builder()
-                .requestId(getId())
-                .controllerId(getId())
-                .taskId(getId())
+                .requestId(UUID.randomUUID())
+                .controllerId(UUID.randomUUID())
+                .taskId(UUID.randomUUID())
                 .requestDatetime(Timestamp.valueOf(LocalDateTime.now().minusSeconds(generator.nextInt(GENERATOR_SIX_MONTH_BOUND))))
                 .requestDatetimeProxy(Timestamp.valueOf(LocalDateTime.now().minusSeconds(generator.nextInt(GENERATOR_SIX_MONTH_BOUND))))
                 .responseDatetime(Timestamp.valueOf(responseTime))
@@ -35,10 +37,10 @@ public class GenerateHelper {
     }
 
 
-    public static SensorData generateSensorData(long sensorId) {
+    public static SensorData generateSensorData(int indexSensor) {
         byte status = (byte) generator.nextInt(2);
         return SensorData.builder()
-                .sensorId(sensorId)
+                .sensorId(UUID.fromString(String.format(SENSOR_UUID_TEMPLATE, indexSensor)))
                 .data(generator.nextDouble())
                 .controllerDatetime(Timestamp.valueOf(LocalDateTime.now().minusSeconds(generator.nextInt(GENERATOR_SIX_MONTH_BOUND))))
                 .status(status)
