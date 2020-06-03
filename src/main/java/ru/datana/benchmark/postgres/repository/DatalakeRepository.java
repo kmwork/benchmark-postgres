@@ -50,7 +50,7 @@ public class DatalakeRepository {
                 .append("request_datetime_proxy TIMESTAMP NULL,")
                 .append("response_datetime TIMESTAMP NULL,")
                 .append(dataAsText)
-                .append("PRIMARY KEY (response_datetime, sensor_id)")
+                .append("PRIMARY KEY (partition_date, partition_hour, partition_minute, sensor_id)")
                 .append(") PARTITION BY RANGE (response_datetime);");
         try (Statement st = connection.createStatement()) {
             log.debug("[SQL:Create] sql = " + tableBuilder);
