@@ -3,6 +3,7 @@ package ru.datana.benchmark.postgres.repository;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.ToolsParameters;
+import ru.datana.benchmark.postgres.filler.SingleSensorToRowFiller;
 import ru.datana.benchmark.postgres.model.MultiSensorDataModel;
 import ru.datana.benchmark.postgres.model.SensorData;
 import ru.datana.benchmark.postgres.model.TechnicalData;
@@ -58,22 +59,9 @@ public class DatalakeRepository {
         }
     }
 
-
-    /**
-     * Вставка значений датчиков в строки пакетом
-     *
-     * @param sensorDataList - данные датчиков списком
-     */
-    public void insertSingleSensorDataPackage(List<MultiSensorDataModel> sensorDataList) throws SQLException {
-        PreparedStatement p = createSQL();
-        insertData(p, sensorDataList);
-    }
-
     /**
      * Вставка значения единичной выборки датчиков в строку
      */
-
-
     public PreparedStatement createSQL() throws SQLException {
         StringBuilder sb = new StringBuilder(1024);
         String dataType = parameters.getMode() == ToolsParameters.ColumnMode.SINGLE ? "?" : "cast(? as hstore)";
@@ -136,27 +124,31 @@ public class DatalakeRepository {
         p.setTimestamp(10, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
     }
 
-    public void insertData(PreparedStatement p, List<MultiSensorDataModel> sensorDataList) throws SQLException {
-        log.info("[SQL:Insert] size of batch = " + sensorDataList.size());
-        for (MultiSensorDataModel m : sensorDataList) {
-            if (parameters.getMode() == ToolsParameters.ColumnMode.MULTI) {
-                String hstore = generateHStore(m);
-                p.setString(11, hstore);
-                setParamsToSQL(p, m.getTechnicalData(), m.getSensorData().get(0));
-                p.execute();
-            } else
-                for (SensorData sensorDataSingle : m.getSensorData()) {
-                    setParamsToSQL(p, m.getTechnicalData(), sensorDataSingle);
-                    p.setDouble(11, sensorDataSingle.getData());
-                    p.execute();
-
-                }
-            log.debug("[Insert:Data] m = " + m);
+    private void addBatch(PreparedStatement p) throws SQLException {
+        p.addBatch();
+        long sqlCount = SingleSensorToRowFiller.getTotalRowIndex();
+        sqlCount++;
+        if (sqlCount % parameters.getPackageSize() == 0) {
+            p.executeBatch();
+            log.info("[SQL:Batch-Insert] size of batch = {}, all rows = {}", sqlCount / parameters.getPackageSize(), sqlCount);
         }
 
+        SingleSensorToRowFiller.setTotalRowIndex(sqlCount);
     }
 
-//------------------------- private block -------------------------
+    public void insertData(PreparedStatement p, MultiSensorDataModel m) throws SQLException {
 
+        if (parameters.getMode() == ToolsParameters.ColumnMode.MULTI) {
+            String hstore = generateHStore(m);
+            p.setString(11, hstore);
+            setParamsToSQL(p, m.getTechnicalData(), m.getSensorData().get(0));
+            addBatch(p);
+        } else
+            for (SensorData sensorDataSingle : m.getSensorData()) {
+                setParamsToSQL(p, m.getTechnicalData(), sensorDataSingle);
+                p.setDouble(11, sensorDataSingle.getData());
+                addBatch(p);
+            }
+    }
 
 }

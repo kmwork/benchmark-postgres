@@ -1,5 +1,7 @@
 package ru.datana.benchmark.postgres.filler;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.datana.benchmark.postgres.ToolsParameters;
 import ru.datana.benchmark.postgres.helper.GenerateHelper;
@@ -13,6 +15,12 @@ import java.util.List;
 
 @Slf4j
 public class SingleSensorToRowFiller extends AbstractFiller {
+
+    @Getter
+    @Setter
+    private static long totalRowIndex;
+
+
     public SingleSensorToRowFiller(ToolsParameters parameters) throws SQLException {
         super(parameters);
     }
@@ -27,13 +35,10 @@ public class SingleSensorToRowFiller extends AbstractFiller {
             };
             PreparedStatement p = datalakeRepository.createSQL();
             long start = System.currentTimeMillis();
-            int step = 0;
-            while (true) {
-                if (step >= parameters.getNumberOfPackages() && parameters.getNumberOfPackages() != ToolsParameters.UNLIMITED_PACKAGES)
-                    break;
-                step++;
-
-                fillPackageAndSaveIt(p, parameters.getPackageSize());
+            long rowCountMax = parameters.getNumberOfPackages() * parameters.getPackageSize();
+            totalRowIndex = 0;
+            while (totalRowIndex < rowCountMax || rowCountMax <= 0) {
+                fillSensorBlock(p);
                 ref.totallyInserted += parameters.getPackageSize();
                 ref.insertedBeforeLog += parameters.getPackageSize();
                 if (ref.insertedBeforeLog >= 100000) {
@@ -49,21 +54,17 @@ public class SingleSensorToRowFiller extends AbstractFiller {
     }
 
 
-    private void fillPackageAndSaveIt(PreparedStatement p, int packageSize) throws SQLException {
-        List<MultiSensorDataModel> mList = new ArrayList(packageSize);
-        for (int i = 0; i < packageSize; i++) {
-            List<SensorData> sensorList = new ArrayList(parameters.getNumberOfSensors());
-            for (int s = 0; s < parameters.getNumberOfSensors(); s++) {
-                var sensor = GenerateHelper.generateSensorData(s);
-                sensorList.add(sensor);
-            }
-            MultiSensorDataModel m = new MultiSensorDataModel();
-            m.setTechnicalData(GenerateHelper.generateTechnicalData(parameters.getMode() == ToolsParameters.ColumnMode.SINGLE));
-            m.setSensorData(sensorList);
-            mList.add(m);
+    private void fillSensorBlock(PreparedStatement p) throws SQLException {
+        List<SensorData> sensorList = new ArrayList(parameters.getNumberOfSensors());
+        for (int s = 0; s < parameters.getNumberOfSensors(); s++) {
+            var sensor = GenerateHelper.generateSensorData(s);
+            sensorList.add(sensor);
         }
+        MultiSensorDataModel m = new MultiSensorDataModel();
+        m.setTechnicalData(GenerateHelper.generateTechnicalData(parameters.getMode() == ToolsParameters.ColumnMode.SINGLE));
+        m.setSensorData(sensorList);
 
-        datalakeRepository.insertData(p, mList);
+        datalakeRepository.insertData(p, m);
     }
 
 }

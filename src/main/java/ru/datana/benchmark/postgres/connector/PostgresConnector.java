@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.List;
 
 @Slf4j
 public class PostgresConnector {
@@ -32,7 +31,7 @@ public class PostgresConnector {
             connection = DriverManager.getConnection(url, login, password);
 
         } catch (SQLException e) {
-            String msg = "Connection Failed, url = "+url;
+            String msg = "Connection Failed, url = " + url;
             log.error(msg, e);
             throw new RuntimeException(msg, e);
 

@@ -1,6 +1,6 @@
 package ru.datana.benchmark.postgres.model;
 
-import lombok.*;
+import lombok.Data;
 
 import java.util.List;
 

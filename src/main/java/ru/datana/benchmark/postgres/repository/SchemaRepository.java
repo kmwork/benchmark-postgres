@@ -19,7 +19,7 @@ public class SchemaRepository {
 
         String query = sb.toString();
         try (Statement stm = connection.createStatement()) {
-            stm.execute(query.toString());
+            stm.execute(query);
         }
     }
 
