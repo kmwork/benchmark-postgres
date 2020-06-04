@@ -16,9 +16,12 @@ public class GenerateHelper {
     private static final String SENSOR_UUID_TEMPLATE = "00000000-0000-4000-9000-%012d";
     private static final int GENERATOR_SIX_MONTH_BOUND = 60 * 60 * 24 * 30 * 6;
     private static long nextId = System.nanoTime();
+    private static LocalDateTime packageTime = LocalDateTime.now();
 
-    public static TechnicalData generateTechnicalData() {
-        return generateTechnicalData(LocalDateTime.now().minusSeconds(generator.nextInt(GENERATOR_SIX_MONTH_BOUND)));
+    public static TechnicalData generateTechnicalData(boolean nextOneSecond) {
+        packageTime = nextOneSecond ? packageTime.plusSeconds(1) :
+                LocalDateTime.now().minusSeconds(generator.nextInt(GENERATOR_SIX_MONTH_BOUND));
+        return generateTechnicalData(packageTime);
     }
 
     public static long getId() {

@@ -58,7 +58,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
                 sensorList.add(sensor);
             }
             MultiSensorDataModel m = new MultiSensorDataModel();
-            m.setTechnicalData(GenerateHelper.generateTechnicalData());
+            m.setTechnicalData(GenerateHelper.generateTechnicalData(parameters.getMode() == ToolsParameters.ColumnMode.SINGLE));
             m.setSensorData(sensorList);
             mList.add(m);
         }
