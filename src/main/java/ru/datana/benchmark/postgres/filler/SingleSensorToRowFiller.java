@@ -29,25 +29,15 @@ public class SingleSensorToRowFiller extends AbstractFiller {
     public void fillDatabase() throws SQLException {
         try {
             if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure();
-            var ref = new Object() {
-                long totallyInserted = 0;
-                long insertedBeforeLog = 0;
-            };
             PreparedStatement p = datalakeRepository.createSQL();
             long start = System.currentTimeMillis();
             long rowCountMax = parameters.getNumberOfPackages() * parameters.getPackageSize();
             totalRowIndex = 0;
             while (totalRowIndex < rowCountMax || rowCountMax <= 0) {
                 fillSensorBlock(p);
-                ref.totallyInserted += parameters.getPackageSize();
-                ref.insertedBeforeLog += parameters.getPackageSize();
-                if (ref.insertedBeforeLog >= 100000) {
-                    ref.insertedBeforeLog %= 100000;
-                    log.info((ref.totallyInserted / 1000) + "к");
-                }
             }
             long stop = System.currentTimeMillis();
-            log.info("Time to generate " + ref.totallyInserted + " rows - " + (stop - start) + " ms");
+            log.info("Time to generate " + totalRowIndex + " rows - " + (stop - start) + " ms");
         } finally {
             closeConnection();
         }
