@@ -11,7 +11,6 @@ import ru.datana.benchmark.postgres.model.TechnicalData;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -124,16 +123,24 @@ public class DatalakeRepository {
         p.setTimestamp(10, new java.sql.Timestamp(t.getResponseDatetime().getTime()));
     }
 
-    private void addBatch(PreparedStatement p) throws SQLException {
+    private boolean addBatch(PreparedStatement p) throws SQLException {
         p.addBatch();
+
         long sqlCount = SingleSensorToRowFiller.getTotalRowIndex();
         sqlCount++;
-        if (sqlCount % parameters.getPackageSize() == 0) {
+        SingleSensorToRowFiller.setTotalRowIndex(sqlCount);
+
+        long maxCount = SingleSensorToRowFiller.getRowCountMax();
+        boolean isLimit = maxCount > 0 && sqlCount >= maxCount;
+
+        long rest = sqlCount % parameters.getPackageSize();
+        if (rest == 0 || isLimit) {
             p.executeBatch();
-            log.info("[SQL:Batch-Insert] size of batch = {}, all rows = {}", sqlCount / parameters.getPackageSize(), sqlCount);
+            log.info("[SQL:Batch-Insert] size of batch = {}, all rows = {}, isLimit = {}", sqlCount / parameters.getPackageSize(), sqlCount, isLimit);
         }
 
-        SingleSensorToRowFiller.setTotalRowIndex(sqlCount);
+
+        return isLimit;
     }
 
     public void insertData(PreparedStatement p, MultiSensorDataModel m) throws SQLException {
@@ -147,7 +154,8 @@ public class DatalakeRepository {
             for (SensorData sensorDataSingle : m.getSensorData()) {
                 setParamsToSQL(p, m.getTechnicalData(), sensorDataSingle);
                 p.setDouble(11, sensorDataSingle.getData());
-                addBatch(p);
+                boolean isLimit = addBatch(p);
+                if (isLimit) break;
             }
     }
 

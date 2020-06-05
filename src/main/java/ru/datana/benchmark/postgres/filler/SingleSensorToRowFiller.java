@@ -19,6 +19,8 @@ public class SingleSensorToRowFiller extends AbstractFiller {
     @Getter
     @Setter
     private static long totalRowIndex;
+    @Getter
+    private static long rowCountMax;
 
 
     public SingleSensorToRowFiller(ToolsParameters parameters) throws SQLException {
@@ -31,7 +33,7 @@ public class SingleSensorToRowFiller extends AbstractFiller {
             if (parameters.isForceRecreate()) datalakeRepository.createSingleSensorStructure();
             PreparedStatement p = datalakeRepository.createSQL();
             long start = System.currentTimeMillis();
-            long rowCountMax = parameters.getNumberOfPackages() * parameters.getPackageSize();
+            rowCountMax = parameters.getNumberOfPackages() * parameters.getPackageSize();
             totalRowIndex = 0;
             while (totalRowIndex < rowCountMax || rowCountMax <= 0) {
                 fillSensorBlock(p);

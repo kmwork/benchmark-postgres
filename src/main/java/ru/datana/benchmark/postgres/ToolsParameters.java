@@ -17,8 +17,8 @@ public class ToolsParameters {
     private String login;
     private String password;
     private String schema;
-    private int packageSize;
-    private int numberOfPackages;
+    private long packageSize;
+    private long numberOfPackages;
     private int numberOfSensors;
     private boolean forceRecreate;
     private ColumnMode mode;
